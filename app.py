@@ -55,6 +55,20 @@ self.addEventListener("notificationclose", () => {});
     )
 
 
+@app.get("/notification-icon.svg")
+async def notification_icon():
+    return Response(
+        content='''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+        <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#5865f2"/><stop offset="1" stop-color="#7c5cff"/></linearGradient></defs>
+        <rect x="4" y="4" width="120" height="120" rx="30" fill="url(#g)"/>
+        <path d="M64 28c-11 0-20 9-20 20v22c0 11 9 20 20 20s20-9 20-20V48c0-11-9-20-20-20Z" fill="none" stroke="white" stroke-width="9" stroke-linecap="round"/>
+        <path d="M30 67c0 19 15 34 34 34s34-15 34-34M64 101v13M48 114h32" fill="none" stroke="white" stroke-width="9" stroke-linecap="round"/>
+        </svg>''',
+        media_type="image/svg+xml",
+        headers={"Cache-Control":"public, max-age=86400"}
+    )
+
+
 @app.get("/manifest.webmanifest")
 async def manifest():
     return Response(
