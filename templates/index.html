@@ -43,7 +43,7 @@ audio{display:none}
 </main>
 <script>
 const $=id=>document.getElementById(id);
-const statusEl=$("status"),statusText=statusEl.querySelector("span:last-child"),startBtn=$("start"),copyBtn=$("copy"),hangupBtn=$("hangup"),muteBtn=$("mute"),audioToggleBtn=$("audioToggle"),remoteAudio=$("remoteAudio"),roomEl=$("room"),timerEl=$("timer"),avatar=$("avatar"),logo=$("logo");
+const statusEl=$("status"),statusText=statusEl.querySelector("span:last-child"),startBtn=$("start"),remoteAudio=$("remoteAudio"),roomEl=$("room"),timerEl=$("timer"),logo=$("logo");
 let muted=false,remoteMuted=false,callStartedAt=0,timerHandle=null;
 const parts=location.pathname.split("/").filter(Boolean);
 let roomId=parts[0]==="room"&&parts[1]?decodeURIComponent(parts[1]):crypto.randomUUID().slice(0,8);
@@ -67,7 +67,8 @@ for(const [action,fn] of [
 ["play",()=>{remoteAudio.muted=false;remoteAudio.play().catch(()=>{})}],
 ["pause",()=>{remoteAudio.muted=true}],
 ["stop",()=>hangup()],
-["hangup",()=>hangup()]
+["hangup",()=>hangup()],
+["togglemicrophone",()=>toggleMute()]
 ]){try{navigator.mediaSession.setActionHandler(action,fn)}catch{}}
 }
 async function notify(text){
@@ -86,9 +87,9 @@ pc.ontrack=async e=>{
 remoteAudio.srcObject=e.streams[0];
 remoteConnected=true;
 await remoteAudio.play().catch(()=>{});
-if("mediaSession" in navigator)navigator.mediaSession.playbackState="playing";
+if("mediaSession" in navigator){navigator.mediaSession.playbackState="playing";try{navigator.mediaSession.setMicrophoneActive?.(!muted)}catch{}}
 setStatus("تماس برقرار است",true);startTimer();
-muteBtn.disabled=false;audioToggleBtn.disabled=false;
+
 await notify("تماس صوتی برقرار شد");
 };
 pc.onconnectionstatechange=()=>{
