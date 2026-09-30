@@ -163,6 +163,114 @@ body{
 .dot{background:#76cfc0!important}
 .online .dot{background:#7de1c9!important;box-shadow:0 0 12px #7de1c9!important}
 .icon svg{stroke:#b6e9df!important}
+
+/* SPACE / METEOR THEME */
+body{
+ background:
+   radial-gradient(circle at 20% 10%,rgba(139,92,246,.24),transparent 28%),
+   radial-gradient(circle at 80% 85%,rgba(168,85,247,.18),transparent 32%),
+   radial-gradient(circle at 50% 45%,rgba(59,130,246,.10),transparent 45%),
+   linear-gradient(145deg,#070414,#100720 48%,#05020e)!important;
+}
+body::before{
+ content:"";position:fixed;inset:-50%;pointer-events:none;z-index:-2;
+ background-image:
+   radial-gradient(circle,rgba(255,255,255,.9) 0 1px,transparent 1.5px),
+   radial-gradient(circle,rgba(196,181,253,.8) 0 1px,transparent 1.5px);
+ background-size:97px 113px,157px 173px;
+ background-position:10px 20px,60px 80px;
+ animation:starDrift 35s linear infinite;
+ opacity:.62;
+}
+body::after{
+ content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;
+ background:
+   radial-gradient(ellipse at 50% 50%,transparent 0 45%,rgba(0,0,0,.28) 100%),
+   linear-gradient(115deg,transparent 0 46%,rgba(139,92,246,.08) 50%,transparent 54%);
+}
+@keyframes starDrift{to{transform:translate3d(70px,45px,0)}}
+.card{
+ border-color:rgba(167,139,250,.34)!important;
+ background:linear-gradient(145deg,rgba(24,14,43,.96),rgba(12,7,25,.97))!important;
+ box-shadow:0 28px 90px rgba(0,0,0,.62),0 0 55px rgba(124,58,237,.10),inset 0 1px rgba(255,255,255,.08)!important;
+}
+.logo{
+ background:linear-gradient(135deg,#c4b5fd,#8b5cf6,#6d28d9)!important;
+ color:#fff!important;
+ box-shadow:0 0 28px rgba(139,92,246,.35)!important;
+}
+.avatar{
+ background:radial-gradient(circle at 35% 25%,rgba(168,85,247,.34),rgba(76,29,149,.10))!important;
+ border-color:rgba(196,181,253,.28)!important;
+ box-shadow:0 0 45px rgba(124,58,237,.14)!important;
+}
+.mainButton{
+ background:linear-gradient(135deg,#c4b5fd,#a78bfa 45%,#7c3aed)!important;
+ color:#180b2c!important;
+ box-shadow:0 12px 30px rgba(124,58,237,.36),0 0 24px rgba(168,85,247,.14)!important;
+}
+.mainButton.danger{
+ background:linear-gradient(135deg,#a78bfa,#7c3aed,#6d28d9)!important;
+ color:#fff!important;
+ box-shadow:0 12px 30px rgba(124,58,237,.38)!important;
+}
+.muteButton{
+ background:linear-gradient(145deg,#24143f,#180d2d)!important;
+ border-color:rgba(167,139,250,.30)!important;
+ color:#ddd6fe!important;
+ box-shadow:inset 0 1px rgba(255,255,255,.04)!important;
+}
+.muteButton:hover{background:linear-gradient(145deg,#2e1950,#1d1037)!important}
+.muteButton.active{
+ background:linear-gradient(145deg,#4c1d95,#6d28d9)!important;
+ border-color:#c4b5fd!important;color:#fff!important;
+}
+.infoBox,.room,.pill{
+ background:rgba(139,92,246,.09)!important;
+ border-color:rgba(167,139,250,.20)!important;
+}
+.infoBox span,.sub,.statusHint,.hint,.timer{color:#b8a9d9!important}
+.room b{color:#c4b5fd!important}
+.badge{
+ background:#1a0e30!important;border-color:rgba(167,139,250,.20)!important;color:#c4b5fd!important;
+}
+#pingBadge.good,#sendBadge.good,#recvBadge.good{
+ background:#17102b!important;color:#86efac!important;border-color:#4c3b70!important
+}
+#pingBadge.medium,#sendBadge.wait,#recvBadge.wait{
+ background:#21152f!important;color:#ddd6fe!important;border-color:#705a92!important
+}
+#pingBadge.bad,#sendBadge.bad,#recvBadge.bad,#pingBadge.timeout{
+ background:#2b1235!important;color:#f0abfc!important;border-color:#853c9e!important
+}
+.visualizer i{background:#c4b5fd!important;box-shadow:0 0 10px rgba(196,181,253,.35)}
+.icon svg{stroke:#ddd6fe!important}
+.o1{background:#8b5cf6!important}.o2{background:#c084fc!important}
+.dot{background:#c4b5fd!important}
+.online .dot{background:#c084fc!important;box-shadow:0 0 12px #c084fc!important}
+
+/* Animated shooting stars / meteors */
+.bg::before,.bg::after{
+ content:"";position:absolute;top:-12vh;left:-25vw;width:2px;height:130px;
+ border-radius:999px;transform:rotate(38deg);
+ background:linear-gradient(to bottom,transparent,rgba(255,255,255,.98),#c4b5fd,transparent);
+ box-shadow:0 0 8px #c4b5fd,0 0 22px rgba(168,85,247,.9);
+ opacity:0;
+ animation:meteor 6.5s linear infinite;
+}
+.bg::after{animation-delay:3.2s;left:72vw;top:-18vh;height:105px;transform:rotate(42deg)}
+@keyframes meteor{
+ 0%{transform:translate3d(0,0,0) rotate(38deg);opacity:0}
+ 7%{opacity:1}
+ 24%{transform:translate3d(115vw,92vh,0) rotate(38deg);opacity:0}
+ 100%{transform:translate3d(115vw,92vh,0) rotate(38deg);opacity:0}
+}
+.calling .avatar{
+ animation:pulseSpace 2s infinite;
+}
+@keyframes pulseSpace{
+ 50%{transform:scale(1.035);box-shadow:0 0 0 16px rgba(168,85,247,.05),0 0 45px rgba(124,58,237,.25)}
+}
 </style>
 </head>
 <body>
