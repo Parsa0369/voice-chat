@@ -23,13 +23,34 @@ body{
 .o1{width:240px;height:240px;background:#635bff;top:-80px;right:-70px}
 .o2{width:200px;height:200px;background:#06b6d4;bottom:-70px;left:-60px}
 .card{
- position:relative;width:min(94vw,540px);padding:24px;
+ position:relative;width:min(94vw,900px);padding:24px;
  border:1px solid #30363d;border-radius:18px;
- background:linear-gradient(145deg,rgba(35,39,47,.96),rgba(25,29,35,.96));
+ background:linear-gradient(145deg,rgba(35,39,47,.98),rgba(25,29,35,.98));
  box-shadow:0 24px 70px rgba(0,0,0,.45),inset 0 1px rgba(255,255,255,.05);
  backdrop-filter:blur(24px) saturate(125%);
 }
-.top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:24px}
+.layout{display:grid;grid-template-columns:300px 1fr;gap:28px;align-items:center}
+.hero{min-width:0}
+.controls{display:flex;flex-direction:column;justify-content:center;min-width:0}
+.icon{width:20px;height:20px;display:inline-flex;vertical-align:middle;margin-left:8px;flex:none}
+.icon svg{width:100%;height:100%;display:block;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.logo .icon{margin:0;width:25px;height:25px}
+.avatar .icon{margin:0;width:62px;height:62px}
+.muteButton{
+ width:100%;margin-top:10px;border:1px solid #3a3d44;border-radius:14px;padding:13px 16px;
+ color:#e5e7eb;background:#2b2d31;font:inherit;font-weight:bold;font-size:13px;cursor:pointer;transition:.18s
+}
+.muteButton:hover{background:#32343a}.muteButton.active{background:#4b2325;border-color:#7f3034;color:#ffb4b6}
+.muteButton:disabled{opacity:.45;cursor:not-allowed}
+@media(max-width:700px){
+ .layout{grid-template-columns:1fr;gap:10px}
+ .card{width:min(94vw,560px);padding:18px}
+ .hero{padding-top:0}
+ .avatar{width:108px;height:108px;margin-bottom:12px}
+ .avatar .icon{width:52px;height:52px}
+ .info{margin-top:10px}
+}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
 .brand{display:flex;align-items:center;gap:12px}
 .logo{width:50px;height:50px;border-radius:17px;display:grid;place-items:center;font-size:25px;
  background:#5865f2;box-shadow:0 12px 30px rgba(88,101,242,.28)}
@@ -79,7 +100,8 @@ audio{display:none}
     <div id="status" class="pill"><span class="dot"></span><span id="statusText">در حال اتصال...</span></div>
   </div>
 
-  <section class="hero">
+  <div class="layout">
+<section class="hero">
     <div class="avatar" id="avatar"></div>
     <div class="statusText" id="heroText">آماده برای تماس</div>
     <div class="statusHint" id="statusHint">با یک لمس میکروفون را فعال کن</div>
@@ -92,6 +114,8 @@ audio{display:none}
   <button id="start" class="mainButton"><span id="startIcon"></span><span id="startLabel">وصل کردن میکروفون</span></button>
   <button id="muteBtn" class="muteButton" disabled><span id="muteIcon"></span><span id="muteLabel">خاموش کردن میکروفون</span></button>
 
+</section>
+<div class="controls">
   <div class="info">
     <div class="infoBox"><strong>خصوصی</strong><span>حداکثر دو نفر</span></div>
     <div class="infoBox"><strong>WebRTC</strong><span>صوت زنده</span></div>
@@ -99,6 +123,8 @@ audio{display:none}
 
   <div class="hint">بعد از شروع تماس، در مرورگرهای پشتیبانی‌شده کنترل‌های تماس می‌توانند در کنترل‌های رسانه‌ای سیستم و اعلان نمایش داده شوند.</div>
   <audio id="remoteAudio" autoplay playsinline></audio>
+</div>
+</div>
 </main>
 
 <script>
@@ -152,11 +178,57 @@ function startTimer(){
 function stopTimer(){if(timerHandle)clearInterval(timerHandle);timerHandle=null;timerEl.textContent=""}
 
 let audioCtx=null;
+let remoteCtx=null,remoteSource=null,remoteGain=null,remoteStream=null;
 function ensureAudio(){
  try{
    audioCtx ||= new (window.AudioContext||window.webkitAudioContext)();
    if(audioCtx.state==="suspended")audioCtx.resume().catch(()=>{});
  }catch{}
+}
+async function playRemoteAudio(stream){
+  try{
+    if(!stream)return;
+    if(!remoteCtx)remoteCtx=new (window.AudioContext||window.webkitAudioContext)();
+    if(remoteCtx.state==="suspended")await remoteCtx.resume().catch(()=>{});
+
+    if(remoteSource){
+      try{remoteSource.disconnect()}catch{}
+      remoteSource=null;
+    }
+    if(remoteGain){
+      try{remoteGain.disconnect()}catch{}
+      remoteGain=null;
+    }
+
+    remoteStream=stream;
+    remoteSource=remoteCtx.createMediaStreamSource(remoteStream);
+    remoteGain=remoteCtx.createGain();
+    remoteGain.gain.value=1;
+    remoteSource.connect(remoteGain);
+    remoteGain.connect(remoteCtx.destination);
+
+    // The HTML audio element is only kept as a fallback holder; it never
+    // controls the actual remote volume.
+    remoteAudio.muted=true;
+    remoteAudio.volume=0;
+  }catch(err){
+    console.warn("remote audio output failed",err);
+    try{
+      remoteAudio.muted=false;
+      remoteAudio.volume=1;
+      remoteAudio.srcObject=stream;
+      await remoteAudio.play();
+    }catch{}
+  }
+}
+function stopRemoteAudio(){
+  try{remoteSource?.disconnect()}catch{}
+  try{remoteGain?.disconnect()}catch{}
+  remoteSource=null;remoteGain=null;remoteStream=null;
+  try{remoteCtx?.close()}catch{}
+  remoteCtx=null;
+  remoteAudio.srcObject=null;
+  remoteAudio.muted=true;
 }
 function ding(){
  try{
@@ -263,18 +335,13 @@ async function preparePeer(){
  pc.onnegotiationneeded=()=>{};
 
  pc.ontrack=async e=>{
-   // Keep the incoming audio on its own playback element.
-   // Local microphone mute must never modify this stream.
-   const remoteTracks=pc.getReceivers().map(r=>r.track).filter(t=>t && t.kind==="audio");
-   const stream=remoteTracks.length?new MediaStream(remoteTracks):(e.streams[0]||new MediaStream([e.track]));
-   if(remoteAudio.srcObject!==stream)remoteAudio.srcObject=stream;
-   remoteAudio.setAttribute("autoplay","");
-   remoteAudio.setAttribute("playsinline","");
-
-   remoteAudio.muted=false;
-   remoteAudio.volume=1;
-   
-   await remoteAudio.play().catch(()=>{});
+   // Remote audio has its own playback graph. Muting the local sender
+   // cannot mute this output.
+   const audioReceivers=pc.getReceivers().filter(r=>r.track?.kind==="audio");
+   const stream=audioReceivers.length
+     ?new MediaStream(audioReceivers.map(r=>r.track))
+     :(e.streams[0]||new MediaStream([e.track]));
+   await playRemoteAudio(stream);
    ensureAudio();
    if("mediaSession" in navigator)navigator.mediaSession.playbackState="playing";
    setStatus("تماس برقرار است",true);
@@ -398,7 +465,7 @@ async function hangup(){
  if(pc)pc.close();
  pc=null;localStream=null;started=false;muted=false;pendingIce=[];remoteDescriptionSet=false;
  clearTimeout(restartTimer);
- remoteAudio.srcObject=null;
+ stopRemoteAudio();
  if("mediaSession" in navigator){
    try{navigator.mediaSession.playbackState="none";navigator.mediaSession.setMicrophoneActive?.(false)}catch{}
  }
@@ -470,7 +537,7 @@ ws.onmessage=async e=>{
  }
 
  if(m.type==="peer-left"){
-   remoteAudio.srcObject=null;
+   stopRemoteAudio();
    if("mediaSession" in navigator)navigator.mediaSession.playbackState="none";
    stopTimer();
    card.classList.remove("calling");
