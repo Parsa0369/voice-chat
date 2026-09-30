@@ -94,27 +94,75 @@ h1{font-size:21px;margin:0 0 4px} .sub{font-size:11px;color:#8994ad}
 .hint{margin-top:14px;text-align:center;color:#68758e;font-size:10px;line-height:1.8}
 audio{display:none}
 
-/* BLUE THEME OVERRIDE — intentionally last so it wins over older styles */
+/* OCEAN-TEAL THEME — light petroleum blue with a subtle soft green tint */
 :root{color-scheme:dark}
-body{background:radial-gradient(circle at 15% 10%,rgba(147,220,255,.45),transparent 32%),radial-gradient(circle at 88% 85%,rgba(96,190,255,.32),transparent 38%),linear-gradient(145deg,#071827,#0b2940 48%,#061521)!important;color:#eaf8ff!important}
-.card{border-color:rgba(125,211,252,.35)!important;background:linear-gradient(145deg,rgba(18,49,70,.98),rgba(10,34,52,.98))!important;box-shadow:0 24px 70px rgba(0,0,0,.45),inset 0 1px rgba(186,230,253,.12)!important}
-.logo{background:linear-gradient(135deg,#7dd3fc,#38bdf8)!important;box-shadow:0 12px 30px rgba(56,189,248,.3)!important;color:#062033!important}
-.avatar{background:radial-gradient(circle at 35% 25%,rgba(125,211,252,.42),rgba(125,211,252,.08))!important;border-color:rgba(125,211,252,.35)!important}
-.mainButton{background:linear-gradient(135deg,#7dd3fc,#38bdf8)!important;color:#062033!important;box-shadow:0 10px 28px rgba(56,189,248,.3)!important}
-.mainButton.danger{background:linear-gradient(135deg,#60a5fa,#3b82f6)!important;color:white!important;box-shadow:0 10px 28px rgba(59,130,246,.3)!important}
-.muteButton{background:#123b57!important;border-color:rgba(125,211,252,.3)!important;color:#dff5ff!important}
-.muteButton:hover{background:#174967!important}.muteButton.active{background:#174a69!important;border-color:#60a5fa!important;color:#dff5ff!important}
-.infoBox,.room,.pill{background:rgba(56,189,248,.08)!important;border-color:rgba(125,211,252,.2)!important}
-.infoBox span,.sub,.statusHint,.hint,.timer{color:#9edcf7!important}
-.room b{color:#7dd3fc!important}
-.badge{background:#0c3047!important;border-color:rgba(125,211,252,.22)!important;color:#a9def5!important}
-#pingBadge.good,#sendBadge.good,#recvBadge.good{background:#103b52!important;color:#86efac!important;border-color:#287b73!important}
-#pingBadge.medium,#sendBadge.wait,#recvBadge.wait{background:#25435a!important;color:#bae6fd!important;border-color:#4d8fb2!important}
-#pingBadge.bad,#sendBadge.bad,#recvBadge.bad,#pingBadge.timeout{background:#173b55!important;color:#93c5fd!important;border-color:#3b82f6!important}
-.visualizer i{background:#7dd3fc!important}
-.o1{background:#38bdf8!important}.o2{background:#7dd3fc!important}
-.dot{background:#7dd3fc!important}.online .dot{background:#67e8f9!important;box-shadow:0 0 12px #67e8f9!important}
-.icon svg{stroke:#b9ecff!important}
+body{
+ background:
+ radial-gradient(circle at 15% 8%,rgba(111,201,187,.22),transparent 32%),
+ radial-gradient(circle at 88% 88%,rgba(69,154,164,.24),transparent 38%),
+ linear-gradient(145deg,#0b252c,#123b40 48%,#0b292f)!important;
+ color:#e8fbf7!important
+}
+.card{
+ border-color:rgba(112,194,183,.30)!important;
+ background:linear-gradient(145deg,rgba(22,58,62,.98),rgba(16,48,53,.98))!important;
+ box-shadow:0 24px 70px rgba(0,0,0,.40),inset 0 1px rgba(178,230,220,.10)!important
+}
+.logo{
+ background:linear-gradient(135deg,#91d6c7,#5fb8b0)!important;
+ box-shadow:0 12px 30px rgba(95,184,176,.25)!important;
+ color:#092b30!important
+}
+.avatar{
+ background:radial-gradient(circle at 35% 25%,rgba(111,201,187,.34),rgba(111,201,187,.07))!important;
+ border-color:rgba(112,194,183,.30)!important
+}
+.mainButton{
+ background:linear-gradient(135deg,#91d6c7,#5fb8b0)!important;
+ color:#092b30!important;
+ box-shadow:0 10px 28px rgba(95,184,176,.25)!important
+}
+.mainButton.danger{
+ background:linear-gradient(135deg,#5faeb0,#4b9297)!important;
+ color:#f1fffd!important;
+ box-shadow:0 10px 28px rgba(75,146,151,.24)!important
+}
+.muteButton{
+ background:#17454b!important;
+ border-color:rgba(112,194,183,.28)!important;
+ color:#d9f4ef!important
+}
+.muteButton:hover{background:#1b5156!important}
+.muteButton.active{
+ background:#20565a!important;
+ border-color:#73c8bb!important;
+ color:#e3faf5!important
+}
+.infoBox,.room,.pill{
+ background:rgba(95,184,176,.075)!important;
+ border-color:rgba(112,194,183,.18)!important
+}
+.infoBox span,.sub,.statusHint,.hint,.timer{color:#9dd2cb!important}
+.room b{color:#8bd3c6!important}
+.badge{
+ background:#123c42!important;
+ border-color:rgba(112,194,183,.20)!important;
+ color:#a8d8d1!important
+}
+#pingBadge.good,#sendBadge.good,#recvBadge.good{
+ background:#123f3d!important;color:#91e0ae!important;border-color:#31806e!important
+}
+#pingBadge.medium,#sendBadge.wait,#recvBadge.wait{
+ background:#24484a!important;color:#b7ddd6!important;border-color:#568f8b!important
+}
+#pingBadge.bad,#sendBadge.bad,#recvBadge.bad,#pingBadge.timeout{
+ background:#194247!important;color:#9dd4d2!important;border-color:#4c9295!important
+}
+.visualizer i{background:#8ed8ca!important}
+.o1{background:#62bcb3!important}.o2{background:#8bcfc2!important}
+.dot{background:#76cfc0!important}
+.online .dot{background:#7de1c9!important;box-shadow:0 0 12px #7de1c9!important}
+.icon svg{stroke:#b6e9df!important}
 </style>
 </head>
 <body>
