@@ -161,7 +161,8 @@ const startBtn=$("start"),startIcon=$("startIcon"),startLabel=$("startLabel"),mu
 
 let muted=false,callStartedAt=0,timerHandle=null,started=false,pc=null,localStream=null,role=null;
 let pendingIce=[],remoteDescriptionSet=false,restartTimer=null;
-let pingTimer=null;\nlet recoveryTimer=null,recoveryBusy=false,badMediaTicks=0,lastMediaSnapshot=null;
+let pingTimer=null;
+let recoveryTimer=null,recoveryBusy=false,badMediaTicks=0,lastMediaSnapshot=null;
 const pingBadge=$("pingBadge"),sendBadge=$("sendBadge"),recvBadge=$("recvBadge");
 
 const MIC_ON='<span class="icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="3" width="8" height="11" rx="4"></rect><path d="M5 11a7 7 0 0 0 14 0"></path><path d="M12 18v3"></path><path d="M8 21h8"></path></svg></span>';
@@ -491,7 +492,8 @@ async function preparePeer(){
  pc=new RTCPeerConnection({iceServers,bundlePolicy:"max-bundle",iceCandidatePoolSize:8,iceTransportPolicy:"all"});
  remoteDescriptionSet=false;
  pendingIce=[];
- if(localStream)for(const track of localStream.getTracks())pc.addTrack(track,localStream);\n await tuneAudioSender();
+ if(localStream)for(const track of localStream.getTracks())pc.addTrack(track,localStream);
+ await tuneAudioSender();
 
  pc.onicecandidate=e=>{if(e.candidate)send({type:"ice",candidate:e.candidate})};
  pc.onicecandidateerror=e=>console.warn("ICE candidate error",e);
