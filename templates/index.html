@@ -23,7 +23,7 @@ body{
 .o1{width:240px;height:240px;background:#635bff;top:-80px;right:-70px}
 .o2{width:200px;height:200px;background:#06b6d4;bottom:-70px;left:-60px}
 .card{
- position:relative;width:min(94vw,500px);padding:25px 22px 22px;
+ position:relative;width:min(94vw,540px);padding:26px 24px 24px;
  border:1px solid rgba(255,255,255,.12);border-radius:32px;
  background:linear-gradient(180deg,rgba(19,24,43,.91),rgba(8,11,22,.94));
  box-shadow:0 35px 100px rgba(0,0,0,.55),inset 0 1px rgba(255,255,255,.06);
@@ -36,8 +36,8 @@ body{
 h1{font-size:21px;margin:0 0 4px} .sub{font-size:11px;color:#8994ad}
 .pill{display:flex;align-items:center;gap:7px;padding:8px 11px;border-radius:99px;background:rgba(255,255,255,.06);font-size:11px;color:#aab5ca}
 .dot{width:7px;height:7px;border-radius:50%;background:#f59e0b}.online .dot{background:#22c55e;box-shadow:0 0 12px #22c55e}
-.hero{text-align:center;padding:7px 0 20px}
-.avatar{width:118px;height:118px;margin:0 auto 18px;border-radius:50%;display:grid;place-items:center;font-size:50px;
+.hero{text-align:center;padding:7px 0 18px}
+.avatar{width:132px;height:132px;margin:0 auto 18px;border-radius:50%;display:grid;place-items:center;font-size:50px;
  background:radial-gradient(circle at 35% 25%,rgba(255,255,255,.18),rgba(255,255,255,.04));
  border:1px solid rgba(255,255,255,.12);box-shadow:0 20px 55px rgba(0,0,0,.3)}
 .calling .avatar{animation:pulse 2s infinite}
@@ -55,7 +55,15 @@ h1{font-size:21px;margin:0 0 4px} .sub{font-size:11px;color:#8994ad}
 .info{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:13px}
 .infoBox{padding:11px;border:1px solid rgba(255,255,255,.07);border-radius:15px;background:rgba(255,255,255,.035);text-align:center}
 .infoBox strong{display:block;font-size:11px;margin-bottom:4px}.infoBox span{font-size:10px;color:#7f8aa2}
-.hint{margin-top:16px;text-align:center;color:#68758e;font-size:10px;line-height:1.8}
+.visualizer{display:flex;align-items:center;justify-content:center;gap:5px;height:30px;margin:4px 0 12px;opacity:.25;transition:.25s}
+.visualizer i{display:block;width:4px;height:8px;border-radius:9px;background:#818cf8}
+.calling .visualizer{opacity:1}
+.calling .visualizer i{animation:wave 850ms ease-in-out infinite alternate}
+.calling .visualizer i:nth-child(2){animation-delay:-.15s}.calling .visualizer i:nth-child(3){animation-delay:-.3s}.calling .visualizer i:nth-child(4){animation-delay:-.45s}.calling .visualizer i:nth-child(5){animation-delay:-.6s}
+@keyframes wave{from{height:6px;transform:scaleY(.7)}to{height:27px;transform:scaleY(1)}}
+.connection{display:flex;justify-content:center;gap:8px;margin:10px 0 0}
+.badge{font-size:9px;padding:6px 9px;border-radius:99px;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.07);color:#8290aa}
+.hint{margin-top:14px;text-align:center;color:#68758e;font-size:10px;line-height:1.8}
 audio{display:none}
 </style>
 </head>
@@ -76,7 +84,9 @@ audio{display:none}
     <div class="statusText" id="heroText">آماده برای تماس</div>
     <div class="statusHint" id="statusHint">با یک لمس میکروفون را فعال کن</div>
     <div class="room">شناسه اتاق: <b id="room"></b></div>
+    <div class="visualizer" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
     <div class="timer" id="timer"></div>
+    <div class="connection"><span class="badge" id="transport">WebRTC • آماده</span><span class="badge" id="micBadge">🎙️ میکروفون خاموش</span></div>
   </section>
 
   <button id="start" class="mainButton">🎙️ وصل کردن میکروفون</button>
@@ -93,7 +103,7 @@ audio{display:none}
 <script>
 const $=id=>document.getElementById(id);
 const status=$("status"),statusText=$("statusText"),heroText=$("heroText"),statusHint=$("statusHint");
-const startBtn=$("start"),remoteAudio=$("remoteAudio"),roomEl=$("room"),timerEl=$("timer"),avatar=$("avatar"),logo=$("logo"),card=$("card");
+const startBtn=$("start"),remoteAudio=$("remoteAudio"),roomEl=$("room"),timerEl=$("timer"),avatar=$("avatar"),logo=$("logo"),card=$("card"),transport=$("transport"),micBadge=$("micBadge");
 
 let muted=false,callStartedAt=0,timerHandle=null,started=false,pc=null,localStream=null,role=null;
 let iceServers=[{urls:"stun:stun.l.google.com:19302"},{urls:"stun:stun1.l.google.com:19302"}];
@@ -125,6 +135,32 @@ function startTimer(){
 }
 function stopTimer(){if(timerHandle)clearInterval(timerHandle);timerHandle=null;timerEl.textContent=""}
 
+let audioCtx=null;
+function ensureAudio(){
+ try{
+   audioCtx ||= new (window.AudioContext||window.webkitAudioContext)();
+   if(audioCtx.state==="suspended")audioCtx.resume().catch(()=>{});
+ }catch{}
+}
+function ding(){
+ try{
+   ensureAudio(); if(!audioCtx)return;
+   const now=audioCtx.currentTime;
+   [0,1].forEach((n)=>{
+     const osc=audioCtx.createOscillator(), gain=audioCtx.createGain();
+     osc.type="sine"; osc.frequency.value=n?880:660;
+     gain.gain.setValueAtTime(.0001,now+n*.13);
+     gain.gain.exponentialRampToValueAtTime(.16,now+n*.13+.025);
+     gain.gain.exponentialRampToValueAtTime(.0001,now+n*.13+.18);
+     osc.connect(gain).connect(audioCtx.destination);
+     osc.start(now+n*.13); osc.stop(now+n*.13+.2);
+   });
+ }catch{}
+}
+function updateBadges(){
+ micBadge.textContent=muted?"🔇 میکروفون خاموش":"🎙️ میکروفون روشن";
+ transport.textContent=pc&&pc.connectionState==="connected"?"⚡ WebRTC • متصل":"📡 WebRTC • در حال اتصال";
+}
 async function requestNotifications(){
  if(!("Notification" in window))return;
  try{
@@ -142,10 +178,12 @@ async function registerSW(){
 }
 registerSW();
 
+function handleNotificationAction(action){
+ if(action==="toggle-microphone")toggleMute();
+ if(action==="hangup")hangup();
+}
 navigator.serviceWorker?.addEventListener("message",e=>{
- if(e.data?.type!=="notification-action")return;
- if(e.data.action==="toggle-microphone")toggleMute();
- if(e.data.action==="hangup")hangup();
+ if(e.data?.type==="notification-action")handleNotificationAction(e.data.action);
 });
 
 async function showCallNotification(){
@@ -205,14 +243,21 @@ async function preparePeer(){
  pc.onicecandidate=e=>{if(e.candidate)send({type:"ice",candidate:e.candidate})};
 
  pc.ontrack=async e=>{
-   remoteAudio.srcObject=e.streams[0];
+   const stream=e.streams[0];
+   remoteAudio.srcObject=stream;
    remoteAudio.muted=false;
+   remoteAudio.volume=1;
+   if(remoteAudio.setSinkId)remoteAudio.setSinkId("").catch(()=>{});
    await remoteAudio.play().catch(()=>{});
+   ensureAudio();
    if("mediaSession" in navigator)navigator.mediaSession.playbackState="playing";
    setStatus("تماس برقرار است",true);
    setHero("متصل شدید 🎧","صدای طرف مقابل فعال است");
+   ding();
+   updateBadges();
    card.classList.add("calling");
    startTimer();
+   updateBadges();
    await showCallNotification();
  };
 
@@ -220,6 +265,8 @@ async function preparePeer(){
    if(pc.connectionState==="connected"){
      setStatus("تماس برقرار است",true);
      setHero("متصل شدید 🎧","تماس صوتی فعال است");
+     ding();
+     updateBadges();
      card.classList.add("calling");
      startTimer();
      showCallNotification();
@@ -261,9 +308,11 @@ async function startMicrophone(){
    startBtn.classList.add("danger");
    setStatus("میکروفون فعال است");
    setHero("میکروفون وصل شد","منتظر نفر دوم...");
+   updateBadges();
    await setupMediaSession();
    await preparePeer();
    await showCallNotification();
+   updateBadges();
 
    if(role==="caller")await makeOffer();
  }catch(e){
@@ -359,6 +408,8 @@ ws.onmessage=async e=>{
    card.classList.remove("calling");
    setStatus("نفر مقابل خارج شد");
    setHero("تماس تمام شد","برای شروع دوباره همان دکمه را بزن");
+   ding();
+   updateBadges();
  }
 };
 
