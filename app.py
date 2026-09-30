@@ -28,6 +28,7 @@ const NOTIFICATION_TAG = "voice-chat-call";
 
 self.addEventListener("notificationclick", event => {
   const action = event.action;
+  const data = event.notification?.data || {};
   event.notification.close();
 
   event.waitUntil((async () => {
@@ -36,19 +37,27 @@ self.addEventListener("notificationclick", event => {
       includeUncontrolled: true
     });
 
-    if (clientsList.length) {
-      const client = clientsList[0];
-      client.postMessage({ type: "notification-action", action });
+    const roomUrl = data.roomUrl || "/";
+
+    let client = clientsList.find(c => {
+      try { return new URL(c.url).pathname === new URL(roomUrl, self.location.origin).pathname; }
+      catch { return false; }
+    });
+
+    if (!client) client = clientsList[0];
+
+    if (client) {
       if ("focus" in client) await client.focus();
+      client.postMessage({ type: "notification-action", action });
       return;
     }
 
     if (self.clients.openWindow) {
-      const client = await self.clients.openWindow("/");
-      if (client) {
+      const opened = await self.clients.openWindow(roomUrl);
+      if (opened) {
         setTimeout(() => {
-          client.postMessage({ type: "notification-action", action });
-        }, 700);
+          opened.postMessage({ type: "notification-action", action });
+        }, 1200);
       }
     }
   })());
