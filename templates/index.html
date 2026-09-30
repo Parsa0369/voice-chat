@@ -263,6 +263,8 @@ async function preparePeer(){
  pc.onnegotiationneeded=()=>{};
 
  pc.ontrack=async e=>{
+   // Keep the incoming audio on its own playback element.
+   // Local microphone mute must never modify this stream.
    const remoteTracks=pc.getReceivers().map(r=>r.track).filter(t=>t && t.kind==="audio");
    const stream=remoteTracks.length?new MediaStream(remoteTracks):(e.streams[0]||new MediaStream([e.track]));
    if(remoteAudio.srcObject!==stream)remoteAudio.srcObject=stream;
