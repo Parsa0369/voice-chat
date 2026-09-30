@@ -134,7 +134,11 @@ async function requestNotifications(){
 
 async function registerSW(){
  if(!("serviceWorker" in navigator))return;
- try{await navigator.serviceWorker.register("/sw.js",{scope:"/"});await navigator.serviceWorker.ready}catch{}
+ try{
+   const reg=await navigator.serviceWorker.register("/sw.js?v=4",{scope:"/",updateViaCache:"none"});
+   await reg.update();
+   await navigator.serviceWorker.ready;
+ }catch{}
 }
 registerSW();
 
@@ -146,24 +150,21 @@ navigator.serviceWorker?.addEventListener("message",e=>{
 
 async function showCallNotification(){
  if(!("Notification" in window)||Notification.permission!=="granted")return;
+ if(!("serviceWorker" in navigator))return;
  try{
    const reg=await navigator.serviceWorker.ready;
    const old=await reg.getNotifications({tag:"voice-chat-call"});
    old.forEach(n=>n.close());
    await reg.showNotification("تماس صوتی",{
-     body:muted?"میکروفون خاموش است — تماس همچنان برقرار است.":"تماس برقرار است — می‌توانی میکروفون را از اعلان کنترل کنی.",
-     tag:"voice-chat-call",
-     renotify:true,
-     silent:true,
-     requireInteraction:true,
+     body:muted?"میکروفون خاموش است — تماس همچنان برقرار است.":"تماس برقرار است — کنترل‌های تماس آماده‌اند.",
+     tag:"voice-chat-call",renotify:true,silent:true,requireInteraction:true,
+     data:{roomId,roomUrl:"/room/"+encodeURIComponent(roomId)},
      actions:[
        {action:"toggle-microphone",title:muted?"وصل کردن میکروفون":"قطع میکروفون"},
        {action:"hangup",title:"پایان تماس"}
      ]
    });
- }catch{
-   try{new Notification("تماس صوتی",{body:muted?"میکروفون خاموش است":"تماس برقرار است",tag:"voice-chat-call",silent:true})}catch{}
- }
+ }catch(e){console.warn("notification failed",e)}
 }
 
 function updateMicState(){
@@ -179,8 +180,6 @@ async function setupMediaSession(){
    navigator.mediaSession.metadata=new MediaMetadata({title:"تماس صوتی",artist:"Voice Chat",album:"تماس خصوصی"});
    navigator.mediaSession.setActionHandler("togglemicrophone",()=>toggleMute());
    navigator.mediaSession.setActionHandler("hangup",()=>hangup());
-   navigator.mediaSession.setActionHandler("play",()=>{remoteAudio.muted=false;remoteAudio.play().catch(()=>{})});
-   navigator.mediaSession.setActionHandler("pause",()=>{remoteAudio.muted=true});
    updateMicState();
  }catch{}
 }
@@ -191,7 +190,7 @@ async function loadTURN(){
    if(!r.ok)return;
    const data=await r.json();
    if(data.enabled&&Array.isArray(data.iceServers)&&data.iceServers.length){
-     iceServers=data.iceServers;
+     iceServers=[...iceServers,...data.iceServers];
    }
  }catch{}
 }
@@ -200,13 +199,14 @@ function send(x){if(ws.readyState===WebSocket.OPEN)ws.send(JSON.stringify(x))}
 
 async function preparePeer(){
  if(pc)return;
- pc=new RTCPeerConnection({iceServers});
+ pc=new RTCPeerConnection({iceServers,bundlePolicy:"max-bundle",iceCandidatePoolSize:2});
  if(localStream)for(const track of localStream.getTracks())pc.addTrack(track,localStream);
 
  pc.onicecandidate=e=>{if(e.candidate)send({type:"ice",candidate:e.candidate})};
 
  pc.ontrack=async e=>{
    remoteAudio.srcObject=e.streams[0];
+   remoteAudio.muted=false;
    await remoteAudio.play().catch(()=>{});
    if("mediaSession" in navigator)navigator.mediaSession.playbackState="playing";
    setStatus("تماس برقرار است",true);
@@ -229,6 +229,16 @@ async function preparePeer(){
      setHero("اتصال ناپایدار","در حال تلاش برای حفظ تماس");
    }
  };
+ pc.oniceconnectionstatechange=async()=>{
+   if(!pc)return;
+   if(pc.iceConnectionState==="failed" && role==="caller"){
+     try{
+       const offer=await pc.createOffer({iceRestart:true});
+       await pc.setLocalDescription(offer);
+       send({type:"offer",sdp:pc.localDescription});
+     }catch(err){console.warn("ICE restart failed",err)}
+   }
+ };
 }
 
 async function startMicrophone(){
@@ -239,7 +249,10 @@ async function startMicrophone(){
    if(!navigator.mediaDevices?.getUserMedia)throw new Error("getUserMedia unavailable");
 
    localStream=await navigator.mediaDevices.getUserMedia({
-     audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true},
+     audio:{
+       echoCancellation:true,noiseSuppression:true,autoGainControl:true,
+       channelCount:{ideal:1},sampleRate:{ideal:48000},latency:{ideal:0.01}
+     },
      video:false
    });
 
@@ -250,6 +263,7 @@ async function startMicrophone(){
    setHero("میکروفون وصل شد","منتظر نفر دوم...");
    await setupMediaSession();
    await preparePeer();
+   await showCallNotification();
 
    if(role==="caller")await makeOffer();
  }catch(e){
