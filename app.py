@@ -84,28 +84,6 @@ async def notification_icon():
     )
 
 
-@app.get("/manifest.webmanifest")
-async def manifest():
-    return Response(
-        content=json.dumps({
-            "name": "Voice Chat",
-            "short_name": "Voice Chat",
-            "description": "تماس صوتی دو نفره",
-            "start_url": "/",
-            "scope": "/",
-            "display": "standalone",
-            "background_color": "#080b16",
-            "theme_color": "#11182b",
-            "lang": "fa",
-            "dir": "rtl",
-            "icons": [
-                {"src": "/icon.svg?v=1", "sizes": "512x512", "type": "image/svg+xml", "purpose": "any maskable"}
-            ]
-        }),
-        media_type="application/manifest+json"
-    )
-
-
 @app.get("/turn-credentials")
 async def turn_credentials():
     key_id = os.getenv("CF_TURN_KEY_ID")
