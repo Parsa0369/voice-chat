@@ -318,7 +318,7 @@ const startBtn=$("start"),startIcon=$("startIcon"),startLabel=$("startLabel"),mu
 let muted=false,callStartedAt=0,timerHandle=null,started=false,pc=null,localStream=null,role=null;
 let pendingIce=[],remoteDescriptionSet=false,restartTimer=null;
 let pingTimer=null;
-let recoveryTimer=null,recoveryBusy=false,badMediaTicks=0,lastMediaSnapshot=null;
+let recoveryTimer=null,recoveryBusy=false,badMediaTicks=0,lastMediaSnapshot=null;\nlet stabilizeTimer=null,stabilizeAttempts=0,lastConnectedState=false;
 const pingBadge=$("pingBadge"),sendBadge=$("sendBadge"),recvBadge=$("recvBadge");
 
 const MIC_ON='<span class="icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="3" width="8" height="11" rx="4"></rect><path d="M5 11a7 7 0 0 0 14 0"></path><path d="M12 18v3"></path><path d="M8 21h8"></path></svg></span>';
@@ -506,7 +506,7 @@ async function requestNotifications(){
 async function registerSW(){
  if(!("serviceWorker" in navigator))return;
  try{
-   const reg=await navigator.serviceWorker.register("/sw.js?v=9",{scope:"/",updateViaCache:"none"});
+   const reg=await navigator.serviceWorker.register("/sw.js?v=10",{scope:"/",updateViaCache:"none"});
    await reg.update();
    await navigator.serviceWorker.ready;
  }catch{}
@@ -528,24 +528,36 @@ async function showCallNotification(){
    const reg=await navigator.serviceWorker.ready;
    const existing=await reg.getNotifications({tag:"voice-chat-call"});
    if(existing.length)return;
-   await reg.showNotification("تماس صوتی",{
-     body:"کنترل میکروفون",
+   const options={
+     body:"تماس صوتی فعال است • کنترل میکروفون و قطع تماس",
      tag:"voice-chat-call",
-     renotify:false,
-     silent:true,
+     renotify:true,
+     silent:false,
      requireInteraction:true,
      data:{roomId},
      icon:"/notification-icon.svg",
      badge:"/notification-icon.svg",
      lang:"fa",
      dir:"rtl",
-     vibrate:[80,40,80],
+     vibrate:[120,60,120],
      actions:[
        {action:"toggle-microphone",title:"میکروفون"},
        {action:"hangup",title:"قطع تماس"}
      ]
-   });
- }catch(e){console.warn("notification failed",e)}
+   };
+   if("serviceWorker" in navigator){
+     const reg=await navigator.serviceWorker.ready;
+     const existing=await reg.getNotifications({tag:"voice-chat-call"});
+     if(!existing.length) await reg.showNotification("تماس صوتی",options);
+   }else{
+     new Notification("تماس صوتی",options);
+   }
+ }catch(e){
+   console.warn("service notification failed",e);
+   try{
+     new Notification("تماس صوتی",{body:"تماس صوتی فعال است",tag:"voice-chat-call",requireInteraction:true});
+   }catch{}
+ }
 }
 
 function updateMicState(){
@@ -641,7 +653,21 @@ function startRecoveryMonitor(){
     }catch{}
   },1500);
 }
-function stopRecoveryMonitor(){clearInterval(recoveryTimer);recoveryTimer=null;badMediaTicks=0;lastMediaSnapshot=null;}
+function stopRecoveryMonitor(){clearInterval(recoveryTimer);recoveryTimer=null;badMediaTicks=0;lastMediaSnapshot=null;clearTimeout(stabilizeTimer);stabilizeTimer=null;stabilizeAttempts=0;}
+function startConnectionStabilizer(){
+  clearTimeout(stabilizeTimer);
+  stabilizeAttempts=0;
+  const run=async()=>{
+    if(!started||!pc||role!=="caller")return;
+    stabilizeAttempts++;
+    try{
+      if(stabilizeAttempts===1) await makeOffer(false);
+      else await makeOffer(true);
+    }catch(err){console.warn("connection stabilization",err)}
+    if(stabilizeAttempts<5) stabilizeTimer=setTimeout(run,[1200,2200,3200,4500][stabilizeAttempts-1]||4500);
+  };
+  stabilizeTimer=setTimeout(run,700);
+}
 
 async function preparePeer(){
  if(pc)return;
@@ -664,7 +690,6 @@ async function preparePeer(){
    if("mediaSession" in navigator)navigator.mediaSession.playbackState="playing";
    setStatus("تماس برقرار است",true);
    setHero("متصل شدید","صدای طرف مقابل فعال است");
-   ding();
    updateBadges();
    card.classList.add("calling");
    startTimer();
@@ -674,6 +699,7 @@ async function preparePeer(){
 
  pc.onconnectionstatechange=()=>{
    if(pc.connectionState==="connected"){
+     if(!lastConnectedState){ ding(); lastConnectedState=true; }
      setStatus("تماس برقرار است",true);
      setHero("متصل شدید","تماس صوتی فعال است");
      ding();
@@ -684,10 +710,12 @@ async function preparePeer(){
      showCallNotification();
    }
    if(pc.connectionState==="disconnected"){
+     if(lastConnectedState){ ding(); lastConnectedState=false; }
      clearTimeout(restartTimer);
      restartTimer=setTimeout(()=>restartIce(),1200);
    }
    if(pc.connectionState==="failed"){
+     if(lastConnectedState){ ding(); lastConnectedState=false; }
      setStatus("اتصال ناپایدار است");
      setHero("اتصال ناپایدار","در حال تلاش برای حفظ تماس");
    }
@@ -820,7 +848,10 @@ ws.onmessage=async e=>{
 
  if(m.type==="ready"){
    role=m.role;
-   if(role==="caller"&&started)await makeOffer();
+   if(role==="caller"&&started){
+     await makeOffer();
+     startConnectionStabilizer();
+   }
    if(started)await setupMediaSession();
    return;
  }
@@ -855,7 +886,13 @@ ws.onmessage=async e=>{
    return
  }
 
+ if(m.type==="reconnect-request"){
+   if(role==="caller" && started) await performRecovery();
+   return;
+ }
+
  if(m.type==="peer-left"){
+   if(lastConnectedState){ ding(); lastConnectedState=false; }
    stopRemoteAudio();
    if("mediaSession" in navigator)navigator.mediaSession.playbackState="none";
    stopTimer();
@@ -863,7 +900,6 @@ ws.onmessage=async e=>{
    card.classList.remove("calling");
    setStatus("نفر مقابل خارج شد");
    setHero("تماس تمام شد","برای شروع دوباره همان دکمه را بزن");
-   ding();
    updateBadges();
  }
 };
