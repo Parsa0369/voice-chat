@@ -28,8 +28,11 @@ const NOTIFICATION_TAG = "voice-chat-call";
 
 self.addEventListener("notificationclick", event => {
   const action = event.action;
-  const data = event.notification?.data || {};
   event.notification.close();
+
+  // The notification itself never opens/focuses the website.
+  // Only the single action button sends a command to an already-open call.
+  if (!action) return;
 
   event.waitUntil((async () => {
     const clientsList = await self.clients.matchAll({
@@ -37,30 +40,10 @@ self.addEventListener("notificationclick", event => {
       includeUncontrolled: true
     });
 
-    const roomUrl = data.roomUrl || "/";
-
-    let client = clientsList.find(c => {
-      try { return new URL(c.url).pathname === new URL(roomUrl, self.location.origin).pathname; }
-      catch { return false; }
-    });
-
-    if (!client) client = clientsList[0];
-
-    if (client) {
-      if ("focus" in client) await client.focus();
-      for (const target of clientsList) {
-        try { target.postMessage({ type: "notification-action", action }); } catch {}
-      }
-      return;
-    }
-
-    if (self.clients.openWindow) {
-      const opened = await self.clients.openWindow(roomUrl);
-      if (opened) {
-        setTimeout(() => {
-          try { opened.postMessage({ type: "notification-action", action }); } catch {}
-        }, 1500);
-      }
+    for (const client of clientsList) {
+      try {
+        client.postMessage({ type: "notification-action", action });
+      } catch {}
     }
   })());
 });
