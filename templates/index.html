@@ -306,12 +306,14 @@ body::after{
 
   <div class="hint">بعد از شروع تماس، در مرورگرهای پشتیبانی‌شده کنترل‌های تماس می‌توانند در کنترل‌های رسانه‌ای سیستم و اعلان نمایش داده شوند.</div>
   <audio id="remoteAudio" autoplay playsinline></audio>
+  <audio id="connectionSound" src="/connection-sound.mp3" preload="auto"></audio>
 </div>
 </div>
 </main>
 
 <script>
 const $=id=>document.getElementById(id);
+const connectionSound=$("connectionSound");
 const status=$("status"),statusText=$("statusText"),heroText=$("heroText"),statusHint=$("statusHint");
 const startBtn=$("start"),startIcon=$("startIcon"),startLabel=$("startLabel"),muteBtn=$("muteBtn"),muteIcon=$("muteIcon"),muteLabel=$("muteLabel"),remoteAudio=$("remoteAudio"),roomEl=$("room"),timerEl=$("timer"),avatar=$("avatar"),logo=$("logo"),card=$("card"),transport=$("transport"),micBadge=$("micBadge");
 
@@ -409,17 +411,11 @@ function stopRemoteAudio(){
 }
 function ding(){
  try{
-   ensureAudio(); if(!audioCtx)return;
-   const now=audioCtx.currentTime;
-   [0,1].forEach((n)=>{
-     const osc=audioCtx.createOscillator(), gain=audioCtx.createGain();
-     osc.type="sine"; osc.frequency.value=n?880:660;
-     gain.gain.setValueAtTime(.0001,now+n*.13);
-     gain.gain.exponentialRampToValueAtTime(.16,now+n*.13+.025);
-     gain.gain.exponentialRampToValueAtTime(.0001,now+n*.13+.18);
-     osc.connect(gain).connect(audioCtx.destination);
-     osc.start(now+n*.13); osc.stop(now+n*.13+.2);
-   });
+   if(!connectionSound)return;
+   connectionSound.pause();
+   connectionSound.currentTime=0;
+   const p=connectionSound.play();
+   if(p?.catch)p.catch(()=>{});
  }catch{}
 }
 function updateBadges(){
@@ -744,6 +740,8 @@ async function startMicrophone(){
  if(started)return;
  try{
    await requestNotifications();
+   ensureAudio();
+   try{connectionSound.load()}catch{}
    await loadTURN();
    if(!navigator.mediaDevices?.getUserMedia)throw new Error("getUserMedia unavailable");
 
