@@ -1,261 +1,144 @@
 <!doctype html>
 <html lang="fa" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Voice Chat</title>
-  <style>
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      min-height: 100vh;
-      display: grid;
-      place-items: center;
-      font-family: Tahoma, Arial, sans-serif;
-      background: #111827;
-      color: #fff;
-    }
-    .card {
-      width: min(92vw, 430px);
-      padding: 28px;
-      border-radius: 24px;
-      background: #1f2937;
-      box-shadow: 0 20px 60px rgba(0,0,0,.35);
-      text-align: center;
-    }
-    h1 { margin: 0 0 8px; font-size: 28px; }
-    p { color: #cbd5e1; line-height: 1.8; }
-    button {
-      width: 100%;
-      border: 0;
-      border-radius: 14px;
-      padding: 14px;
-      margin-top: 10px;
-      font-size: 16px;
-      cursor: pointer;
-      background: #3b82f6;
-      color: white;
-    }
-    button:disabled { opacity: .5; cursor: not-allowed; }
-    .danger { background: #dc2626; }
-    .secondary { background: #374151; }
-    #status { margin: 18px 0 4px; font-weight: bold; }
-    #room { word-break: break-all; color: #93c5fd; }
-    audio { width: 100%; margin-top: 18px; }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b1020">
+<meta name="description" content="تماس صوتی دو نفره">
+<link rel="manifest" href="/manifest.webmanifest">
+<title>Voice Chat</title>
+<style>
+*{box-sizing:border-box}body{margin:0;min-height:100vh;font-family:Tahoma,Arial,sans-serif;color:#fff;background:radial-gradient(circle at top,#263b67 0,#101624 45%,#080b12 100%);display:grid;place-items:center;padding:18px}
+.card{width:min(94vw,460px);padding:30px 24px;border:1px solid rgba(255,255,255,.1);border-radius:30px;background:rgba(18,25,40,.88);backdrop-filter:blur(18px);box-shadow:0 25px 80px rgba(0,0,0,.45);text-align:center}
+.logo{width:76px;height:76px;margin:0 auto 14px;border-radius:24px;display:grid;place-items:center;font-size:36px;background:linear-gradient(145deg,#4f8cff,#7c4dff);box-shadow:0 12px 35px rgba(79,140,255,.3)}
+h1{margin:0;font-size:28px}p{color:#aebbd0;line-height:1.9;margin:8px 0 18px}
+.status{display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;border-radius:15px;background:rgba(255,255,255,.06);margin-bottom:14px;font-weight:bold}
+.dot{width:9px;height:9px;border-radius:50%;background:#f59e0b}.online .dot{background:#22c55e;box-shadow:0 0 12px #22c55e}
+.room{font-size:13px;color:#8fb7ff;word-break:break-all;margin-bottom:12px}
+button{width:100%;border:0;border-radius:15px;padding:14px;margin-top:9px;font:inherit;font-weight:bold;color:white;background:#3978ff;cursor:pointer}
+button:disabled{opacity:.45;cursor:not-allowed}.secondary{background:#293449}.danger{background:#dc3545}
+.hint{font-size:12px;color:#8290a7;margin-top:15px}.hidden{display:none}audio{width:100%;margin-top:14px}
+</style>
 </head>
 <body>
-  <main class="card">
-    <h1>🎙️ Voice Chat</h1>
-    <p>برای تماس صوتی، لینک این اتاق را برای نفر دوم بفرست.</p>
-
-    <div id="status">در حال اتصال...</div>
-    <div id="room"></div>
-
-    <button id="start">فعال کردن میکروفون</button>
-    <button id="copy" class="secondary">کپی لینک اتاق</button>
-    <button id="hangup" class="danger" disabled>قطع تماس</button>
-
-    <audio id="remoteAudio" autoplay controls></audio>
-  </main>
-
+<main class="card">
+<div class="logo">🎙️</div>
+<h1>Voice Chat</h1>
+<p>لینک اتاق را برای نفر دوم بفرست. بعد از اجازه‌ی اولیه، اتصال و پخش صدا خودکار انجام می‌شود.</p>
+<div id="status" class="status"><span class="dot"></span><span>در حال اتصال...</span></div>
+<div id="room" class="room"></div>
+<button id="start">🎙️ اجازه میکروفون</button>
+<button id="copy" class="secondary">🔗 کپی لینک اتاق</button>
+<button id="hangup" class="danger" disabled>📞 قطع تماس</button>
+<audio id="remoteAudio" autoplay playsinline></audio>
+<div class="hint">در مرورگرهای پشتیبانی‌شده، کنترل تماس از کنترل‌های رسانه‌ای سیستم هم در دسترس است.</div>
+</main>
 <script>
-const statusEl = document.getElementById("status");
-const roomEl = document.getElementById("room");
-const startBtn = document.getElementById("start");
-const copyBtn = document.getElementById("copy");
-const hangupBtn = document.getElementById("hangup");
-const remoteAudio = document.getElementById("remoteAudio");
-
-const pathParts = location.pathname.split("/").filter(Boolean);
-let roomId = pathParts[0] === "room" && pathParts[1]
-  ? decodeURIComponent(pathParts[1])
-  : crypto.randomUUID().slice(0, 8);
-
-if (!location.pathname.startsWith("/room/")) {
-  history.replaceState({}, "", "/room/" + roomId);
+const $=id=>document.getElementById(id);
+const statusEl=$("status"),statusText=statusEl.querySelector("span:last-child"),startBtn=$("start"),copyBtn=$("copy"),hangupBtn=$("hangup"),remoteAudio=$("remoteAudio"),roomEl=$("room");
+const parts=location.pathname.split("/").filter(Boolean);
+let roomId=parts[0]==="room"&&parts[1]?decodeURIComponent(parts[1]):crypto.randomUUID().slice(0,8);
+if(!location.pathname.startsWith("/room/"))history.replaceState({}, "", "/room/"+encodeURIComponent(roomId));
+roomEl.textContent="اتاق: "+roomId;
+const wsProtocol=location.protocol==="https:"?"wss:":"ws:";
+const ws=new WebSocket(wsProtocol+"//"+location.host+"/ws/"+encodeURIComponent(roomId));
+let pc=null,localStream=null,role=null,started=false,remoteConnected=false;
+const rtcConfig={iceServers:[
+{urls:"stun:stun.l.google.com:19302"},
+{urls:"stun:stun1.l.google.com:19302"}
+]};
+function setStatus(t,online=false){statusText.textContent=t;statusEl.classList.toggle("online",online)}
+function send(x){if(ws.readyState===WebSocket.OPEN)ws.send(JSON.stringify(x))}
+async function setupMediaSession(){
+if(!("mediaSession" in navigator))return;
+navigator.mediaSession.metadata=new MediaMetadata({title:"Voice Chat",artist:"تماس صوتی",album:"Voice Chat"});
+for(const [action,fn] of [
+["play",()=>remoteAudio.play().catch(()=>{})],
+["pause",()=>remoteAudio.pause()],
+["stop",()=>hangup()],
+["hangup",()=>hangup()]
+]){try{navigator.mediaSession.setActionHandler(action,fn)}catch{}}
 }
-
-roomEl.textContent = "اتاق: " + roomId;
-
-const wsProtocol = location.protocol === "https:" ? "wss:" : "ws:";
-const ws = new WebSocket(
-  wsProtocol + "//" + location.host + "/ws/" + encodeURIComponent(roomId)
-);
-
-let pc = null;
-let localStream = null;
-let role = null;
-let started = false;
-
-const rtcConfig = {
-  iceServers: [
-    { urls: "stun:stun.l.google.com:19302" },
-    { urls: "stun:stun1.l.google.com:19302" }
-  ]
-};
-
-function setStatus(text) {
-  statusEl.textContent = text;
+async function notify(text){
+if(!("Notification" in window))return;
+try{
+if(Notification.permission==="default")await Notification.requestPermission();
+if(Notification.permission==="granted")new Notification("Voice Chat",{body:text,tag:"voice-chat",silent:true});
+}catch{}
 }
-
-function send(data) {
-  if (ws.readyState === WebSocket.OPEN) {
-    ws.send(JSON.stringify(data));
-  }
+async function preparePeer(){
+if(pc)return;
+pc=new RTCPeerConnection(rtcConfig);
+if(localStream)for(const track of localStream.getTracks())pc.addTrack(track,localStream);
+pc.onicecandidate=e=>{if(e.candidate)send({type:"ice",candidate:e.candidate})};
+pc.ontrack=async e=>{
+remoteAudio.srcObject=e.streams[0];
+remoteConnected=true;
+await remoteAudio.play().catch(()=>{});
+if("mediaSession" in navigator)navigator.mediaSession.playbackState="playing";
+setStatus("تماس برقرار است",true);
+await notify("تماس صوتی برقرار شد");
+};
+pc.onconnectionstatechange=()=>{
+if(pc.connectionState==="connected")setStatus("تماس برقرار است",true);
+if(["failed","disconnected"].includes(pc.connectionState))setStatus("اتصال ناپایدار است");
+};
 }
-
-async function preparePeer() {
-  if (pc) return;
-
-  pc = new RTCPeerConnection(rtcConfig);
-
-  if (localStream) {
-    for (const track of localStream.getTracks()) {
-      pc.addTrack(track, localStream);
-    }
-  }
-
-  pc.onicecandidate = event => {
-    if (event.candidate) {
-      send({ type: "ice", candidate: event.candidate });
-    }
-  };
-
-  pc.ontrack = event => {
-    remoteAudio.srcObject = event.streams[0];
-    remoteAudio.play().catch(() => {});
-  };
-
-  pc.onconnectionstatechange = () => {
-    if (pc.connectionState === "connected") {
-      setStatus("🟢 تماس برقرار است");
-    } else if (["failed", "disconnected", "closed"].includes(pc.connectionState)) {
-      setStatus("🔴 تماس قطع شد");
-    }
-  };
+async function startMicrophone(){
+if(started)return;
+try{
+if(!navigator.mediaDevices?.getUserMedia)throw new Error("getUserMedia unavailable");
+localStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true},video:false});
+started=true;startBtn.disabled=true;hangupBtn.disabled=false;
+await setupMediaSession();await preparePeer();
+setStatus("میکروفون آماده است؛ منتظر نفر دوم...");
+if(role==="caller")await makeOffer();
+}catch(e){console.error(e);setStatus("برای شروع تماس باید اجازه‌ی میکروفون را بدهی.");}
 }
-
-async function startMicrophone() {
-  if (started) return;
-
-  try {
-    localStream = await navigator.mediaDevices.getUserMedia({
-      audio: {
-        echoCancellation: true,
-        noiseSuppression: true,
-        autoGainControl: true
-      },
-      video: false
-    });
-
-    started = true;
-    startBtn.disabled = true;
-    hangupBtn.disabled = false;
-    setStatus("میکروفون فعال شد؛ منتظر نفر دوم...");
-    await preparePeer();
-
-    if (role === "caller") {
-      const offer = await pc.createOffer();
-      await pc.setLocalDescription(offer);
-      send({ type: "offer", sdp: pc.localDescription });
-    }
-  } catch (err) {
-    setStatus("اجازه استفاده از میکروفون داده نشد.");
-    console.error(err);
-  }
+async function makeOffer(){
+await preparePeer();
+const offer=await pc.createOffer();
+await pc.setLocalDescription(offer);
+send({type:"offer",sdp:pc.localDescription});
 }
-
-ws.onopen = () => {
-  setStatus("به اتاق وصل شد؛ میکروفون را فعال کن.");
+ws.onopen=()=>setStatus("به اتاق وصل شد؛ در حال آماده‌سازی...");
+ws.onmessage=async e=>{
+const m=JSON.parse(e.data);
+if(m.type==="full"){setStatus("این اتاق پر است.");startBtn.disabled=true;return}
+if(m.type==="joined"){setStatus(m.peers===1?"منتظر نفر دوم...":"دو نفر در اتاق هستند.");return}
+if(m.type==="ready"){
+role=m.role;
+if(role==="caller"&&started)await makeOffer();
+if(started)await setupMediaSession();
+return;
+}
+if(m.type==="offer"){
+await preparePeer();await pc.setRemoteDescription(m.sdp);
+const answer=await pc.createAnswer();await pc.setLocalDescription(answer);
+send({type:"answer",sdp:pc.localDescription});return;
+}
+if(m.type==="answer"){if(pc)await pc.setRemoteDescription(m.sdp);return}
+if(m.type==="ice"){if(pc)try{await pc.addIceCandidate(m.candidate)}catch(err){console.warn(err)}return}
+if(m.type==="peer-left"){remoteAudio.srcObject=null;remoteConnected=false;if("mediaSession"in navigator)navigator.mediaSession.playbackState="none";setStatus("نفر مقابل از تماس خارج شد.")}
 };
+async function hangup(){
+if(localStream)localStream.getTracks().forEach(t=>t.stop());
+if(pc)pc.close();pc=null;started=false;remoteConnected=false;remoteAudio.srcObject=null;
+if("mediaSession"in navigator)navigator.mediaSession.playbackState="none";
+startBtn.disabled=false;hangupBtn.disabled=true;setStatus("تماس قطع شد.");
+}
+startBtn.onclick=async()=>{await startMicrophone();await notify("کنترل تماس فعال شد")};
+copyBtn.onclick=async()=>{try{await navigator.clipboard.writeText(location.href);copyBtn.textContent="✓ لینک کپی شد";setTimeout(()=>copyBtn.textContent="🔗 کپی لینک اتاق",1600)}catch{prompt("لینک اتاق:",location.href)}};
+hangupBtn.onclick=hangup;
+window.addEventListener("beforeunload",()=>{if(localStream)localStream.getTracks().forEach(t=>t.stop());if(pc)pc.close();ws.close()});
 
-ws.onmessage = async event => {
-  const msg = JSON.parse(event.data);
-
-  if (msg.type === "full") {
-    setStatus("این اتاق پر است.");
-    startBtn.disabled = true;
-    return;
-  }
-
-  if (msg.type === "joined") {
-    setStatus(msg.peers === 1
-      ? "منتظر نفر دوم..."
-      : "دو نفر در اتاق هستند.");
-    return;
-  }
-
-  if (msg.type === "ready") {
-    role = msg.role;
-    if (role === "caller" && started) {
-      await preparePeer();
-      const offer = await pc.createOffer();
-      await pc.setLocalDescription(offer);
-      send({ type: "offer", sdp: pc.localDescription });
-    }
-    return;
-  }
-
-  if (msg.type === "offer") {
-    await preparePeer();
-    await pc.setRemoteDescription(msg.sdp);
-    const answer = await pc.createAnswer();
-    await pc.setLocalDescription(answer);
-    send({ type: "answer", sdp: pc.localDescription });
-    return;
-  }
-
-  if (msg.type === "answer") {
-    if (pc) await pc.setRemoteDescription(msg.sdp);
-    return;
-  }
-
-  if (msg.type === "ice") {
-    if (pc) {
-      try {
-        await pc.addIceCandidate(msg.candidate);
-      } catch (err) {
-        console.warn("ICE error", err);
-      }
-    }
-    return;
-  }
-
-  if (msg.type === "peer-left") {
-    setStatus("نفر مقابل از تماس خارج شد.");
-    remoteAudio.srcObject = null;
-  }
-};
-
-startBtn.onclick = startMicrophone;
-
-copyBtn.onclick = async () => {
-  try {
-    await navigator.clipboard.writeText(location.href);
-    copyBtn.textContent = "لینک کپی شد ✓";
-    setTimeout(() => copyBtn.textContent = "کپی لینک اتاق", 1500);
-  } catch {
-    prompt("لینک اتاق:", location.href);
-  }
-};
-
-hangupBtn.onclick = () => {
-  if (localStream) localStream.getTracks().forEach(track => track.stop());
-  if (pc) pc.close();
-  pc = null;
-  started = false;
-  startBtn.disabled = false;
-  hangupBtn.disabled = true;
-  remoteAudio.srcObject = null;
-  setStatus("تماس قطع شد.");
-};
-
-window.addEventListener("beforeunload", () => {
-  if (localStream) localStream.getTracks().forEach(track => track.stop());
-  if (pc) pc.close();
-  ws.close();
-});
+// If microphone permission was already granted, try to start automatically.
+(async()=>{
+try{
+const perms=navigator.permissions?.query?await navigator.permissions.query({name:"microphone"}):null;
+if(perms?.state==="granted")await startMicrophone();
+}catch{}
+})();
 </script>
 </body>
 </html>
