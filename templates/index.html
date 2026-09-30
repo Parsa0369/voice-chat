@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#080b16">
+<meta name="theme-color" content="#bfe8ff">
 <meta name="description" content="تماس صوتی دو نفره">
 <link rel="manifest" href="/manifest.webmanifest">
 <title>تماس صوتی</title>
@@ -14,9 +14,9 @@ body{
  margin:0;min-height:100vh;padding:20px;font-family:Tahoma,Arial,sans-serif;color:#f8fafc;
  display:grid;place-items:center;overflow:hidden;
  background:
- radial-gradient(circle at 20% 10%,rgba(79,70,229,.35),transparent 35%),
- radial-gradient(circle at 90% 90%,rgba(14,165,233,.18),transparent 38%),
- #070914;
+ radial-gradient(circle at 15% 8%,rgba(125,211,252,.55),transparent 34%),
+ radial-gradient(circle at 90% 85%,rgba(56,189,248,.30),transparent 40%),
+ linear-gradient(145deg,#081725,#0b2030 48%,#07131f);
 }
 .bg{position:fixed;inset:0;pointer-events:none;overflow:hidden}
 .orb{position:absolute;border-radius:50%;filter:blur(55px);opacity:.28}
@@ -25,14 +25,14 @@ body{
 .card{
  position:relative;width:min(94vw,540px);padding:26px 24px 24px;
  border:1px solid rgba(255,255,255,.12);border-radius:32px;
- background:linear-gradient(180deg,rgba(19,24,43,.91),rgba(8,11,22,.94));
- box-shadow:0 35px 100px rgba(0,0,0,.55),inset 0 1px rgba(255,255,255,.06);
- backdrop-filter:blur(24px);
+ background:linear-gradient(145deg,rgba(220,245,255,.20),rgba(130,200,235,.08));
+ box-shadow:0 35px 100px rgba(0,80,130,.35),inset 0 1px rgba(255,255,255,.22),0 0 70px rgba(125,211,252,.10);
+ backdrop-filter:blur(30px) saturate(145%);
 }
 .top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:24px}
 .brand{display:flex;align-items:center;gap:12px}
 .logo{width:50px;height:50px;border-radius:17px;display:grid;place-items:center;font-size:25px;
- background:linear-gradient(145deg,#6366f1,#22d3ee);box-shadow:0 12px 30px rgba(99,102,241,.28)}
+ background:linear-gradient(145deg,#bae6fd,#38bdf8);box-shadow:0 12px 35px rgba(56,189,248,.32)}
 h1{font-size:21px;margin:0 0 4px} .sub{font-size:11px;color:#8994ad}
 .pill{display:flex;align-items:center;gap:7px;padding:8px 11px;border-radius:99px;background:rgba(255,255,255,.06);font-size:11px;color:#aab5ca}
 .dot{width:7px;height:7px;border-radius:50%;background:#f59e0b}.online .dot{background:#22c55e;box-shadow:0 0 12px #22c55e}
@@ -48,15 +48,15 @@ h1{font-size:21px;margin:0 0 4px} .sub{font-size:11px;color:#8994ad}
 .timer{height:20px;font-variant-numeric:tabular-nums;color:#94a3b8;font-size:12px}
 .mainButton{
  width:100%;border:0;border-radius:20px;padding:17px 16px;color:#fff;font:inherit;font-weight:bold;font-size:15px;cursor:pointer;
- background:linear-gradient(135deg,#6366f1,#4f46e5);box-shadow:0 14px 30px rgba(79,70,229,.28);transition:.18s
+ background:linear-gradient(135deg,#bae6fd,#38bdf8);color:#062033;box-shadow:0 16px 35px rgba(56,189,248,.28),inset 0 1px rgba(255,255,255,.55);transition:.18s
 }
-.mainButton:active{transform:scale(.985)}.mainButton.danger{background:linear-gradient(135deg,#ef4444,#dc2626);box-shadow:0 14px 30px rgba(220,38,38,.22)}
+.mainButton:active{transform:scale(.985)}.mainButton.danger{background:linear-gradient(135deg,#fecaca,#fb7185);color:#3b0710;box-shadow:0 14px 30px rgba(251,113,133,.24)}
 .mainButton:disabled{opacity:.5;cursor:not-allowed}
 .info{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:13px}
 .infoBox{padding:11px;border:1px solid rgba(255,255,255,.07);border-radius:15px;background:rgba(255,255,255,.035);text-align:center}
 .infoBox strong{display:block;font-size:11px;margin-bottom:4px}.infoBox span{font-size:10px;color:#7f8aa2}
 .visualizer{display:flex;align-items:center;justify-content:center;gap:5px;height:30px;margin:4px 0 12px;opacity:.25;transition:.25s}
-.visualizer i{display:block;width:4px;height:8px;border-radius:9px;background:#818cf8}
+.visualizer i{display:block;width:4px;height:8px;border-radius:9px;background:#bae6fd}
 .calling .visualizer{opacity:1}
 .calling .visualizer i{animation:wave 850ms ease-in-out infinite alternate}
 .calling .visualizer i:nth-child(2){animation-delay:-.15s}.calling .visualizer i:nth-child(3){animation-delay:-.3s}.calling .visualizer i:nth-child(4){animation-delay:-.45s}.calling .visualizer i:nth-child(5){animation-delay:-.6s}
@@ -171,7 +171,7 @@ async function requestNotifications(){
 async function registerSW(){
  if(!("serviceWorker" in navigator))return;
  try{
-   const reg=await navigator.serviceWorker.register("/sw.js?v=4",{scope:"/",updateViaCache:"none"});
+   const reg=await navigator.serviceWorker.register("/sw.js?v=6",{scope:"/",updateViaCache:"none"});
    await reg.update();
    await navigator.serviceWorker.ready;
  }catch{}
@@ -180,7 +180,6 @@ registerSW();
 
 function handleNotificationAction(action){
  if(action==="toggle-microphone")toggleMute();
- if(action==="hangup")hangup();
 }
 navigator.serviceWorker?.addEventListener("message",e=>{
  if(e.data?.type==="notification-action")handleNotificationAction(e.data.action);
@@ -191,16 +190,16 @@ async function showCallNotification(){
  if(!("serviceWorker" in navigator))return;
  try{
    const reg=await navigator.serviceWorker.ready;
-   const old=await reg.getNotifications({tag:"voice-chat-call"});
-   old.forEach(n=>n.close());
+   const existing=await reg.getNotifications({tag:"voice-chat-call"});
+   if(existing.length)return;
    await reg.showNotification("تماس صوتی",{
-     body:muted?"میکروفون خاموش است — تماس همچنان برقرار است.":"تماس برقرار است — کنترل‌های تماس آماده‌اند.",
-     tag:"voice-chat-call",renotify:true,silent:true,requireInteraction:true,
-     data:{roomId,roomUrl:"/room/"+encodeURIComponent(roomId)},
-     actions:[
-       {action:"toggle-microphone",title:muted?"وصل کردن میکروفون":"قطع میکروفون"},
-       {action:"hangup",title:"پایان تماس"}
-     ]
+     body:"کنترل میکروفون",
+     tag:"voice-chat-call",
+     renotify:false,
+     silent:true,
+     requireInteraction:true,
+     data:{roomId},
+     actions:[{action:"toggle-microphone",title:"قطع و وصل"}]
    });
  }catch(e){console.warn("notification failed",e)}
 }
@@ -243,11 +242,12 @@ async function preparePeer(){
  pc.onicecandidate=e=>{if(e.candidate)send({type:"ice",candidate:e.candidate})};
 
  pc.ontrack=async e=>{
-   const stream=e.streams[0];
+   const remoteTracks=pc.getReceivers().map(r=>r.track).filter(t=>t && t.kind==="audio");
+   const stream=remoteTracks.length?new MediaStream(remoteTracks):(e.streams[0]||new MediaStream([e.track]));
    remoteAudio.srcObject=stream;
    remoteAudio.muted=false;
    remoteAudio.volume=1;
-   if(remoteAudio.setSinkId)remoteAudio.setSinkId("").catch(()=>{});
+   
    await remoteAudio.play().catch(()=>{});
    ensureAudio();
    if("mediaSession" in navigator)navigator.mediaSession.playbackState="playing";
@@ -298,7 +298,7 @@ async function startMicrophone(){
    localStream=await navigator.mediaDevices.getUserMedia({
      audio:{
        echoCancellation:true,noiseSuppression:true,autoGainControl:true,
-       channelCount:{ideal:1},sampleRate:{ideal:48000},latency:{ideal:0.01}
+       channelCount:1
      },
      video:false
    });
