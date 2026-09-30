@@ -48,7 +48,9 @@ self.addEventListener("notificationclick", event => {
 
     if (client) {
       if ("focus" in client) await client.focus();
-      client.postMessage({ type: "notification-action", action });
+      for (const target of clientsList) {
+        try { target.postMessage({ type: "notification-action", action }); } catch {}
+      }
       return;
     }
 
@@ -56,8 +58,8 @@ self.addEventListener("notificationclick", event => {
       const opened = await self.clients.openWindow(roomUrl);
       if (opened) {
         setTimeout(() => {
-          opened.postMessage({ type: "notification-action", action });
-        }, 1200);
+          try { opened.postMessage({ type: "notification-action", action }); } catch {}
+        }, 1500);
       }
     }
   })());
