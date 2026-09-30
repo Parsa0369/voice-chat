@@ -73,23 +73,24 @@ audio{display:none}
 <main class="card" id="card">
   <div class="top">
     <div class="brand">
-      <div class="logo" id="logo">🎙️</div>
+      <div class="logo" id="logo"></div>
       <div><h1>تماس صوتی</h1><div class="sub">تماس خصوصی دو نفره</div></div>
     </div>
     <div id="status" class="pill"><span class="dot"></span><span id="statusText">در حال اتصال...</span></div>
   </div>
 
   <section class="hero">
-    <div class="avatar" id="avatar">🎙️</div>
+    <div class="avatar" id="avatar"></div>
     <div class="statusText" id="heroText">آماده برای تماس</div>
     <div class="statusHint" id="statusHint">با یک لمس میکروفون را فعال کن</div>
     <div class="room">شناسه اتاق: <b id="room"></b></div>
     <div class="visualizer" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
     <div class="timer" id="timer"></div>
-    <div class="connection"><span class="badge" id="transport">WebRTC • آماده</span><span class="badge" id="micBadge">🎙️ میکروفون خاموش</span></div>
+    <div class="connection"><span class="badge" id="transport">WebRTC • آماده</span><span class="badge" id="micBadge">میکروفون خاموش</span></div>
   </section>
 
-  <button id="start" class="mainButton">🎙️ وصل کردن میکروفون</button>
+  <button id="start" class="mainButton"><span id="startIcon"></span><span id="startLabel">وصل کردن میکروفون</span></button>
+  <button id="muteBtn" class="muteButton" disabled><span id="muteIcon"></span><span id="muteLabel">خاموش کردن میکروفون</span></button>
 
   <div class="info">
     <div class="infoBox"><strong>🔒 خصوصی</strong><span>حداکثر دو نفر</span></div>
@@ -103,9 +104,23 @@ audio{display:none}
 <script>
 const $=id=>document.getElementById(id);
 const status=$("status"),statusText=$("statusText"),heroText=$("heroText"),statusHint=$("statusHint");
-const startBtn=$("start"),remoteAudio=$("remoteAudio"),roomEl=$("room"),timerEl=$("timer"),avatar=$("avatar"),logo=$("logo"),card=$("card"),transport=$("transport"),micBadge=$("micBadge");
+const startBtn=$("start"),startIcon=$("startIcon"),startLabel=$("startLabel"),muteBtn=$("muteBtn"),muteIcon=$("muteIcon"),muteLabel=$("muteLabel"),remoteAudio=$("remoteAudio"),roomEl=$("room"),timerEl=$("timer"),avatar=$("avatar"),logo=$("logo"),card=$("card"),transport=$("transport"),micBadge=$("micBadge");
 
 let muted=false,callStartedAt=0,timerHandle=null,started=false,pc=null,localStream=null,role=null;
+
+const MIC_ON='<span class="icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="3" width="8" height="11" rx="4"></rect><path d="M5 11a7 7 0 0 0 14 0"></path><path d="M12 18v3"></path><path d="M8 21h8"></path></svg></span>';
+const MIC_OFF='<span class="icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="3" width="8" height="11" rx="4"></rect><path d="M5 11a7 7 0 0 0 14 0"></path><path d="M12 18v3"></path><path d="M8 21h8"></path><path d="M4 4l16 16"></path></svg></span>';
+const PHONE='<span class="icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.3 1.8.7 2.6a2 2 0 0 1-.5 2.1L8 9.7a16 16 0 0 0 6.3 6.3l1.3-1.3a2 2 0 0 1 2.1-.5c.8.4 1.7.6 2.6.7A2 2 0 0 1 22 16.9z"></path></svg></span>';
+function setMicGraphics(){
+  startIcon.innerHTML=started?PHONE:MIC_ON;
+  startLabel.textContent=started?"قطع کردن تماس":"وصل کردن میکروفون";
+  muteIcon.innerHTML=muted?MIC_ON:MIC_OFF;
+  muteLabel.textContent=muted?"روشن کردن میکروفون":"خاموش کردن میکروفون";
+  muteBtn.classList.toggle("active",muted);
+  muteBtn.disabled=!started;
+  avatar.innerHTML=muted?MIC_OFF:MIC_ON;
+  logo.innerHTML=started?PHONE:MIC_ON;
+}
 let iceServers=[{urls:"stun:stun.l.google.com:19302"},{urls:"stun:stun1.l.google.com:19302"}];
 
 const parts=location.pathname.split("/").filter(Boolean);
@@ -119,7 +134,7 @@ const ws=new WebSocket(wsProtocol+"//"+location.host+"/ws/"+encodeURIComponent(r
 function setStatus(text,online=false){
  statusText.textContent=text;
  status.classList.toggle("online",online);
- logo.textContent=online?"📞":"🎙️";
+ setMicGraphics();
 }
 function setHero(title,hint){
  heroText.textContent=title;
@@ -158,7 +173,8 @@ function ding(){
  }catch{}
 }
 function updateBadges(){
- micBadge.textContent=muted?"🔇 میکروفون خاموش":"🎙️ میکروفون روشن";
+ micBadge.textContent=muted?"میکروفون خاموش":"میکروفون روشن";
+ setMicGraphics();
  transport.textContent=pc&&pc.connectionState==="connected"?"⚡ WebRTC • متصل":"📡 WebRTC • در حال اتصال";
 }
 async function requestNotifications(){
@@ -252,7 +268,7 @@ async function preparePeer(){
    ensureAudio();
    if("mediaSession" in navigator)navigator.mediaSession.playbackState="playing";
    setStatus("تماس برقرار است",true);
-   setHero("متصل شدید 🎧","صدای طرف مقابل فعال است");
+   setHero("متصل شدید","صدای طرف مقابل فعال است");
    ding();
    updateBadges();
    card.classList.add("calling");
@@ -264,7 +280,7 @@ async function preparePeer(){
  pc.onconnectionstatechange=()=>{
    if(pc.connectionState==="connected"){
      setStatus("تماس برقرار است",true);
-     setHero("متصل شدید 🎧","تماس صوتی فعال است");
+     setHero("متصل شدید","تماس صوتی فعال است");
      ding();
      updateBadges();
      card.classList.add("calling");
@@ -304,8 +320,8 @@ async function startMicrophone(){
    });
 
    started=true;
-   startBtn.textContent="🔴 قطع کردن میکروفون";
    startBtn.classList.add("danger");
+   setMicGraphics();
    setStatus("میکروفون فعال است");
    setHero("میکروفون وصل شد","منتظر نفر دوم...");
    updateBadges();
@@ -335,12 +351,16 @@ async function toggleMute(){
  localStream.getAudioTracks().forEach(t=>t.enabled=!muted);
  updateMicState();
  setHero(
-   muted?"میکروفون خاموش است 🔇":"میکروفون روشن است 🎙️",
+   muted?"میکروفون خاموش است":"میکروفون روشن است",
    "تماس همچنان برقرار است"
  );
  setStatus("تماس برقرار است",true);
  card.classList.add("calling");
  if("mediaSession" in navigator)navigator.mediaSession.playbackState="playing";
+ // Mute only changes the local sender track. Never touch remoteAudio.
+ remoteAudio.muted=false;
+ remoteAudio.volume=1;
+ if(remoteAudio.srcObject)await remoteAudio.play().catch(()=>{});
  if(Notification.permission==="granted")await showCallNotification();
 }
 
@@ -353,8 +373,8 @@ async function hangup(){
    try{navigator.mediaSession.playbackState="none";navigator.mediaSession.setMicrophoneActive?.(false)}catch{}
  }
  startBtn.disabled=false;
- startBtn.textContent="🎙️ وصل کردن میکروفون";
  startBtn.classList.remove("danger");
+ setMicGraphics();
  card.classList.remove("calling");
  stopTimer();
  setStatus("تماس قطع شد");
@@ -414,6 +434,8 @@ ws.onmessage=async e=>{
 };
 
 startBtn.onclick=()=>started?hangup():startMicrophone();
+muteBtn.onclick=()=>toggleMute();
+setMicGraphics();
 
 window.addEventListener("beforeunload",()=>{
  if(localStream)localStream.getTracks().forEach(t=>t.stop());
