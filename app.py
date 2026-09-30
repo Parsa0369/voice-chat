@@ -1,5 +1,5 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
-from fastapi.responses import HTMLResponse, Response, JSONResponse
+from fastapi.responses import HTMLResponse, Response, JSONResponse, FileResponse
 from pathlib import Path
 import json
 import os
@@ -8,6 +8,7 @@ import httpx
 app = FastAPI(title="Voice Chat")
 rooms: dict[str, set[WebSocket]] = {}
 INDEX = Path(__file__).parent / "templates" / "index.html"
+CONNECTION_SOUND = Path(__file__).parent / "connection-sound.mp3"
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -19,6 +20,10 @@ async def home():
 async def room(room_id: str):
     return INDEX.read_text(encoding="utf-8")
 
+
+@app.get("/connection-sound.mp3")
+async def connection_sound():
+    return FileResponse(CONNECTION_SOUND, media_type="audio/mpeg", headers={"Cache-Control":"public, max-age=86400"})
 
 @app.get("/sw.js")
 async def service_worker():
