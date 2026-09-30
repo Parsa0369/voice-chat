@@ -26,6 +26,14 @@ async def room(room_id: str):
     return HTMLResponse(INDEX.read_text(encoding="utf-8"), headers={"Cache-Control":"no-store, no-cache, must-revalidate, max-age=0", "Pragma":"no-cache", "Expires":"0"})
 
 
+@app.get("/google8c40933bfb8df01e.html")
+async def google_verification():
+    return Response(
+        content="google-site-verification: google8c40933bfb8df01e.html",
+        media_type="text/html"
+    )
+
+
 @app.get("/icon.svg")
 async def app_icon():
     return FileResponse(APP_ICON, media_type="image/svg+xml", headers={"Cache-Control":"public, max-age=31536000, immutable"})
