@@ -1,9 +1,11 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from starlette.websockets import WebSocketState
 from fastapi.responses import HTMLResponse, Response, JSONResponse, FileResponse
 from pathlib import Path
 import json
 import os
 import httpx
+import uuid
 
 app = FastAPI(title="Voice Chat")
 rooms: dict[str, set[WebSocket]] = {}
@@ -135,6 +137,11 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str):
     await websocket.accept()
     room = rooms.setdefault(room_id, set())
 
+    # Remove stale/disconnected sockets before checking capacity.
+    for peer in list(room):
+        if peer.client_state != WebSocketState.CONNECTED:
+            room.discard(peer)
+
     if len(room) >= 2:
         await websocket.send_text(json.dumps({
             "type": "full",
@@ -171,7 +178,7 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str):
                     try:
                         await peer.send_text(message)
                     except Exception:
-                        pass
+                        room.discard(peer)
     except WebSocketDisconnect:
         room.discard(websocket)
         if not room:
