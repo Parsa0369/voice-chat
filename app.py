@@ -12,7 +12,7 @@ INDEX = Path(__file__).parent / "templates" / "index.html"
 
 @app.get("/", response_class=HTMLResponse)
 async def home():
-    return INDEX.read_text(encoding="utf-8")
+    return HTMLResponse(INDEX.read_text(encoding="utf-8"), headers={"Cache-Control":"no-store, no-cache, must-revalidate, max-age=0"})
 
 
 @app.get("/room/{room_id}", response_class=HTMLResponse)
