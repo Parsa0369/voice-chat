@@ -23,22 +23,22 @@ body{
 .o1{width:240px;height:240px;background:#635bff;top:-80px;right:-70px}
 .o2{width:200px;height:200px;background:#06b6d4;bottom:-70px;left:-60px}
 .card{
- position:relative;width:min(94vw,540px);padding:26px 24px 24px;
- border:1px solid rgba(255,255,255,.12);border-radius:32px;
- background:linear-gradient(145deg,rgba(220,245,255,.20),rgba(130,200,235,.08));
- box-shadow:0 35px 100px rgba(0,80,130,.35),inset 0 1px rgba(255,255,255,.22),0 0 70px rgba(125,211,252,.10);
- backdrop-filter:blur(30px) saturate(145%);
+ position:relative;width:min(94vw,540px);padding:24px;
+ border:1px solid #30363d;border-radius:18px;
+ background:linear-gradient(145deg,rgba(35,39,47,.96),rgba(25,29,35,.96));
+ box-shadow:0 24px 70px rgba(0,0,0,.45),inset 0 1px rgba(255,255,255,.05);
+ backdrop-filter:blur(24px) saturate(125%);
 }
 .top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:24px}
 .brand{display:flex;align-items:center;gap:12px}
 .logo{width:50px;height:50px;border-radius:17px;display:grid;place-items:center;font-size:25px;
- background:linear-gradient(145deg,#bae6fd,#38bdf8);box-shadow:0 12px 35px rgba(56,189,248,.32)}
+ background:#5865f2;box-shadow:0 12px 30px rgba(88,101,242,.28)}
 h1{font-size:21px;margin:0 0 4px} .sub{font-size:11px;color:#8994ad}
 .pill{display:flex;align-items:center;gap:7px;padding:8px 11px;border-radius:99px;background:rgba(255,255,255,.06);font-size:11px;color:#aab5ca}
 .dot{width:7px;height:7px;border-radius:50%;background:#f59e0b}.online .dot{background:#22c55e;box-shadow:0 0 12px #22c55e}
 .hero{text-align:center;padding:7px 0 18px}
-.avatar{width:132px;height:132px;margin:0 auto 18px;border-radius:50%;display:grid;place-items:center;font-size:50px;
- background:radial-gradient(circle at 35% 25%,rgba(255,255,255,.18),rgba(255,255,255,.04));
+ .avatar{width:132px;height:132px;margin:0 auto 18px;border-radius:50%;display:grid;place-items:center;
+ background:radial-gradient(circle at 35% 25%,rgba(88,101,242,.34),rgba(255,255,255,.035));
  border:1px solid rgba(255,255,255,.12);box-shadow:0 20px 55px rgba(0,0,0,.3)}
 .calling .avatar{animation:pulse 2s infinite}
 @keyframes pulse{50%{transform:scale(1.035);box-shadow:0 0 0 16px rgba(99,102,241,.04),0 20px 55px rgba(0,0,0,.3)}}
@@ -48,21 +48,21 @@ h1{font-size:21px;margin:0 0 4px} .sub{font-size:11px;color:#8994ad}
 .timer{height:20px;font-variant-numeric:tabular-nums;color:#94a3b8;font-size:12px}
 .mainButton{
  width:100%;border:0;border-radius:20px;padding:17px 16px;color:#fff;font:inherit;font-weight:bold;font-size:15px;cursor:pointer;
- background:linear-gradient(135deg,#bae6fd,#38bdf8);color:#062033;box-shadow:0 16px 35px rgba(56,189,248,.28),inset 0 1px rgba(255,255,255,.55);transition:.18s
+ background:#5865f2;color:#fff;box-shadow:0 10px 24px rgba(88,101,242,.25);transition:.18s
 }
-.mainButton:active{transform:scale(.985)}.mainButton.danger{background:linear-gradient(135deg,#fecaca,#fb7185);color:#3b0710;box-shadow:0 14px 30px rgba(251,113,133,.24)}
+.mainButton:active{transform:scale(.985)}.mainButton.danger{background:#ed4245;color:#fff;box-shadow:0 10px 24px rgba(237,66,69,.22)}
 .mainButton:disabled{opacity:.5;cursor:not-allowed}
 .info{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:13px}
 .infoBox{padding:11px;border:1px solid rgba(255,255,255,.07);border-radius:15px;background:rgba(255,255,255,.035);text-align:center}
 .infoBox strong{display:block;font-size:11px;margin-bottom:4px}.infoBox span{font-size:10px;color:#7f8aa2}
 .visualizer{display:flex;align-items:center;justify-content:center;gap:5px;height:30px;margin:4px 0 12px;opacity:.25;transition:.25s}
-.visualizer i{display:block;width:4px;height:8px;border-radius:9px;background:#bae6fd}
+.visualizer i{display:block;width:4px;height:8px;border-radius:9px;background:#5865f2}
 .calling .visualizer{opacity:1}
 .calling .visualizer i{animation:wave 850ms ease-in-out infinite alternate}
 .calling .visualizer i:nth-child(2){animation-delay:-.15s}.calling .visualizer i:nth-child(3){animation-delay:-.3s}.calling .visualizer i:nth-child(4){animation-delay:-.45s}.calling .visualizer i:nth-child(5){animation-delay:-.6s}
 @keyframes wave{from{height:6px;transform:scaleY(.7)}to{height:27px;transform:scaleY(1)}}
 .connection{display:flex;justify-content:center;gap:8px;margin:10px 0 0}
-.badge{font-size:9px;padding:6px 9px;border-radius:99px;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.07);color:#8290aa}
+.badge{font-size:9px;padding:6px 9px;border-radius:99px;background:#202225;border:1px solid #2f3136;color:#9da3ae}
 .hint{margin-top:14px;text-align:center;color:#68758e;font-size:10px;line-height:1.8}
 audio{display:none}
 </style>
@@ -93,8 +93,8 @@ audio{display:none}
   <button id="muteBtn" class="muteButton" disabled><span id="muteIcon"></span><span id="muteLabel">خاموش کردن میکروفون</span></button>
 
   <div class="info">
-    <div class="infoBox"><strong>🔒 خصوصی</strong><span>حداکثر دو نفر</span></div>
-    <div class="infoBox"><strong>📡 WebRTC</strong><span>صوت زنده</span></div>
+    <div class="infoBox"><strong>خصوصی</strong><span>حداکثر دو نفر</span></div>
+    <div class="infoBox"><strong>WebRTC</strong><span>صوت زنده</span></div>
   </div>
 
   <div class="hint">بعد از شروع تماس، در مرورگرهای پشتیبانی‌شده کنترل‌های تماس می‌توانند در کنترل‌های رسانه‌ای سیستم و اعلان نمایش داده شوند.</div>
@@ -107,10 +107,11 @@ const status=$("status"),statusText=$("statusText"),heroText=$("heroText"),statu
 const startBtn=$("start"),startIcon=$("startIcon"),startLabel=$("startLabel"),muteBtn=$("muteBtn"),muteIcon=$("muteIcon"),muteLabel=$("muteLabel"),remoteAudio=$("remoteAudio"),roomEl=$("room"),timerEl=$("timer"),avatar=$("avatar"),logo=$("logo"),card=$("card"),transport=$("transport"),micBadge=$("micBadge");
 
 let muted=false,callStartedAt=0,timerHandle=null,started=false,pc=null,localStream=null,role=null;
+let pendingIce=[],remoteDescriptionSet=false,restartTimer=null;
 
 const MIC_ON='<span class="icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="3" width="8" height="11" rx="4"></rect><path d="M5 11a7 7 0 0 0 14 0"></path><path d="M12 18v3"></path><path d="M8 21h8"></path></svg></span>';
 const MIC_OFF='<span class="icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="3" width="8" height="11" rx="4"></rect><path d="M5 11a7 7 0 0 0 14 0"></path><path d="M12 18v3"></path><path d="M8 21h8"></path><path d="M4 4l16 16"></path></svg></span>';
-const PHONE='<span class="icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.3 1.8.7 2.6a2 2 0 0 1-.5 2.1L8 9.7a16 16 0 0 0 6.3 6.3l1.3-1.3a2 2 0 0 1 2.1-.5c.8.4 1.7.6 2.6.7A2 2 0 0 1 22 16.9z"></path></svg></span>';
+const PHONE='<span class="icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.3 1.8.7 2.6a2 2 0 0 1-.5 2.1L8 9.7a16 16 0 0 0 6.3 6.3l1.3-1.3a2 2 0 0 1 2.1.5c.8.4 1.7.6 2.6.7A2 2 0 0 1 22 16.9z"></path></svg></span>';
 function setMicGraphics(){
   startIcon.innerHTML=started?PHONE:MIC_ON;
   startLabel.textContent=started?"قطع کردن تماس":"وصل کردن میکروفون";
@@ -252,15 +253,22 @@ function send(x){if(ws.readyState===WebSocket.OPEN)ws.send(JSON.stringify(x))}
 
 async function preparePeer(){
  if(pc)return;
- pc=new RTCPeerConnection({iceServers,bundlePolicy:"max-bundle",iceCandidatePoolSize:2});
+ pc=new RTCPeerConnection({iceServers,bundlePolicy:"max-bundle",iceCandidatePoolSize:8,iceTransportPolicy:"all"});
+ remoteDescriptionSet=false;
+ pendingIce=[];
  if(localStream)for(const track of localStream.getTracks())pc.addTrack(track,localStream);
 
  pc.onicecandidate=e=>{if(e.candidate)send({type:"ice",candidate:e.candidate})};
+ pc.onicecandidateerror=e=>console.warn("ICE candidate error",e);
+ pc.onnegotiationneeded=()=>{};
 
  pc.ontrack=async e=>{
    const remoteTracks=pc.getReceivers().map(r=>r.track).filter(t=>t && t.kind==="audio");
    const stream=remoteTracks.length?new MediaStream(remoteTracks):(e.streams[0]||new MediaStream([e.track]));
-   remoteAudio.srcObject=stream;
+   if(remoteAudio.srcObject!==stream)remoteAudio.srcObject=stream;
+   remoteAudio.setAttribute("autoplay","");
+   remoteAudio.setAttribute("playsinline","");
+
    remoteAudio.muted=false;
    remoteAudio.volume=1;
    
@@ -287,14 +295,18 @@ async function preparePeer(){
      startTimer();
      showCallNotification();
    }
-   if(["failed","disconnected"].includes(pc.connectionState)){
+   if(pc.connectionState==="disconnected"){
+     clearTimeout(restartTimer);
+     restartTimer=setTimeout(()=>restartIce(),1200);
+   }
+   if(pc.connectionState==="failed"){
      setStatus("اتصال ناپایدار است");
      setHero("اتصال ناپایدار","در حال تلاش برای حفظ تماس");
    }
  };
  pc.oniceconnectionstatechange=async()=>{
    if(!pc)return;
-   if(pc.iceConnectionState==="failed" && role==="caller"){
+   if((pc.iceConnectionState==="failed"||pc.iceConnectionState==="disconnected") && role==="caller"){
      try{
        const offer=await pc.createOffer({iceRestart:true});
        await pc.setLocalDescription(offer);
@@ -302,6 +314,14 @@ async function preparePeer(){
      }catch(err){console.warn("ICE restart failed",err)}
    }
  };
+ async function restartIce(){
+   if(!pc||role!=="caller"||!started)return;
+   try{
+     const offer=await pc.createOffer({iceRestart:true});
+     await pc.setLocalDescription(offer);
+     send({type:"offer",sdp:pc.localDescription});
+   }catch(e){console.warn("restart",e)}
+ }
 }
 
 async function startMicrophone(){
@@ -348,7 +368,14 @@ async function makeOffer(){
 async function toggleMute(){
  if(!localStream || !started)return;
  muted=!muted;
- localStream.getAudioTracks().forEach(t=>t.enabled=!muted);
+ localStream.getAudioTracks().forEach(t=>{t.enabled=!muted;});
+ // Never stop/remove/replace the sender track. Remote playback is completely separate.
+ if(pc){
+   for(const sender of pc.getSenders()){
+     if(sender.track?.kind==="audio")sender.track.enabled=!muted;
+   }
+ }
+
  updateMicState();
  setHero(
    muted?"میکروفون خاموش است":"میکروفون روشن است",
@@ -367,7 +394,8 @@ async function toggleMute(){
 async function hangup(){
  if(localStream)localStream.getTracks().forEach(t=>t.stop());
  if(pc)pc.close();
- pc=null;localStream=null;started=false;muted=false;
+ pc=null;localStream=null;started=false;muted=false;pendingIce=[];remoteDescriptionSet=false;
+ clearTimeout(restartTimer);
  remoteAudio.srcObject=null;
  if("mediaSession" in navigator){
    try{navigator.mediaSession.playbackState="none";navigator.mediaSession.setMicrophoneActive?.(false)}catch{}
@@ -412,14 +440,32 @@ ws.onmessage=async e=>{
  if(m.type==="offer"){
    await preparePeer();
    await pc.setRemoteDescription(m.sdp);
+   remoteDescriptionSet=true;
+   for(const candidate of pendingIce.splice(0)){
+     try{await pc.addIceCandidate(candidate)}catch(err){console.warn("queued ICE",err)}
+   }
    const answer=await pc.createAnswer();
    await pc.setLocalDescription(answer);
    send({type:"answer",sdp:pc.localDescription});
    return;
  }
 
- if(m.type==="answer"){if(pc)await pc.setRemoteDescription(m.sdp);return}
- if(m.type==="ice"){if(pc)try{await pc.addIceCandidate(m.candidate)}catch(err){console.warn(err)}return}
+ if(m.type==="answer"){
+   if(pc){
+     await pc.setRemoteDescription(m.sdp);
+     remoteDescriptionSet=true;
+     for(const candidate of pendingIce.splice(0)){
+       try{await pc.addIceCandidate(candidate)}catch(err){console.warn("queued ICE",err)}
+     }
+   }
+   return
+ }
+ if(m.type==="ice"){
+   if(!pc)return;
+   if(!remoteDescriptionSet){pendingIce.push(m.candidate);return}
+   try{await pc.addIceCandidate(m.candidate)}catch(err){console.warn("ICE",err)}
+   return
+ }
 
  if(m.type==="peer-left"){
    remoteAudio.srcObject=null;
