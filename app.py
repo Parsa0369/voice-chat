@@ -23,7 +23,7 @@ async def home():
 
 @app.get("/room/{room_id}", response_class=HTMLResponse)
 async def room(room_id: str):
-    return INDEX.read_text(encoding="utf-8")
+    return HTMLResponse(INDEX.read_text(encoding="utf-8"), headers={"Cache-Control":"no-store, no-cache, must-revalidate, max-age=0", "Pragma":"no-cache", "Expires":"0"})
 
 
 @app.get("/icon.svg")
