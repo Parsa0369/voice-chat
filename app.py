@@ -1,12 +1,10 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, Response
 from pathlib import Path
 import json
 
 app = FastAPI(title="Voice Chat")
-
 rooms: dict[str, set[WebSocket]] = {}
-
 INDEX = Path(__file__).parent / "templates" / "index.html"
 
 @app.get("/", response_class=HTMLResponse)
@@ -17,27 +15,35 @@ async def home():
 async def room(room_id: str):
     return INDEX.read_text(encoding="utf-8")
 
+@app.get("/manifest.webmanifest")
+async def manifest():
+    return Response(
+        content=json.dumps({
+            "name": "Voice Chat",
+            "short_name": "Voice Chat",
+            "start_url": "/",
+            "display": "standalone",
+            "background_color": "#0b1020",
+            "theme_color": "#0b1020",
+            "lang": "fa",
+            "dir": "rtl"
+        }),
+        media_type="application/manifest+json"
+    )
+
 @app.websocket("/ws/{room_id}")
 async def websocket_endpoint(websocket: WebSocket, room_id: str):
     await websocket.accept()
     room = rooms.setdefault(room_id, set())
 
-    # This first message tells the client whether it is the first or second peer.
     if len(room) >= 2:
-        await websocket.send_text(json.dumps({
-            "type": "full",
-            "message": "این اتاق پر است."
-        }))
+        await websocket.send_text(json.dumps({"type": "full", "message": "این اتاق پر است."}))
         await websocket.close()
         return
 
     room.add(websocket)
-    await websocket.send_text(json.dumps({
-        "type": "joined",
-        "peers": len(room)
-    }))
+    await websocket.send_text(json.dumps({"type": "joined", "peers": len(room)}))
 
-    # Tell the existing peer to create the WebRTC offer.
     if len(room) == 2:
         peers = list(room)
         try:
