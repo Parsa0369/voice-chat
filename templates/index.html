@@ -37,13 +37,9 @@ audio{display:none}
 <div class="timer" id="timer"></div>
 <div class="controls">
 <button id="start">🎙️ وصل کردن میکروفون</button>
-<button id="mute" class="mute" disabled>🔇 قطع صدای من</button>
-<button id="audioToggle" class="secondary" disabled>🔊 قطع صدای طرف مقابل</button>
-<button id="hangup" class="danger" disabled>📞 قطع تماس</button>
 </div>
-<button id="copy" class="secondary">🔗 کپی لینک اتاق</button>
 <audio id="remoteAudio" autoplay playsinline></audio>
-<div class="hint">در گوشی و سیستم‌های پشتیبانی‌شده، کنترل‌های پخش مرورگر می‌توانند در اعلان/ویجت رسانه‌ای سیستم نمایش داده شوند. دکمه‌های داخل صفحه همیشه در دسترس‌اند.</div>
+<div class="hint">در مرورگرهای پشتیبانی‌شده، کنترل رسانه‌ای سیستم می‌تواند گزینه‌ی روشن/خاموش کردن میکروفون را هم ارائه کند.</div>
 </main>
 <script>
 const $=id=>document.getElementById(id);
@@ -105,7 +101,7 @@ if(started)return;
 try{
 if(!navigator.mediaDevices?.getUserMedia)throw new Error("getUserMedia unavailable");
 localStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true},video:false});
-started=true;startBtn.disabled=true;hangupBtn.disabled=false;muteBtn.disabled=false;audioToggleBtn.disabled=false;
+started=true;startBtn.textContent="🔴 قطع کردن میکروفون";startBtn.classList.add("danger");
 await setupMediaSession();await preparePeer();
 setStatus("میکروفون آماده است؛ منتظر نفر دوم...");
 if(role==="caller")await makeOffer();
@@ -139,23 +135,21 @@ if(m.type==="peer-left"){remoteAudio.srcObject=null;remoteConnected=false;if("me
 };
 async function toggleMute(){
 if(!localStream)return;
-muted=!muted;localStream.getAudioTracks().forEach(t=>t.enabled=!muted);
-muteBtn.textContent=muted?"🎙️ وصل کردن صدای من":"🔇 قطع صدای من";muteBtn.classList.toggle("muted",muted);
+muted=!muted;
+localStream.getAudioTracks().forEach(t=>t.enabled=!muted);
+if("mediaSession" in navigator){
+try{navigator.mediaSession.setMicrophoneActive?.(!muted)}catch{}
 }
-function toggleRemoteAudio(){
-remoteMuted=!remoteMuted;remoteAudio.muted=remoteMuted;
-audioToggleBtn.textContent=remoteMuted?"🔊 وصل کردن صدای طرف مقابل":"🔊 قطع صدای طرف مقابل";
 }
 async function hangup(){
 if(localStream)localStream.getTracks().forEach(t=>t.stop());
 if(pc)pc.close();pc=null;started=false;remoteConnected=false;remoteAudio.srcObject=null;
 if("mediaSession"in navigator)navigator.mediaSession.playbackState="none";
-startBtn.disabled=false;hangupBtn.disabled=true;muteBtn.disabled=true;audioToggleBtn.disabled=true;
+startBtn.disabled=false;startBtn.textContent="🎙️ وصل کردن میکروفون";startBtn.classList.remove("danger");
 muted=false;remoteMuted=false;remoteAudio.muted=false;
-muteBtn.textContent="🔇 قطع صدای من";muteBtn.classList.remove("muted");
-audioToggleBtn.textContent="🔊 قطع صدای طرف مقابل";stopTimer();setStatus("تماس قطع شد.");
+stopTimer();setStatus("تماس قطع شد.");
 }
-hangupBtn.onclick=hangup;muteBtn.onclick=toggleMute;audioToggleBtn.onclick=toggleRemoteAudio;
+startBtn.onclick=async()=>{if(started){await hangup()}else{await startMicrophone()}};
 window.addEventListener("beforeunload",()=>{if(localStream)localStream.getTracks().forEach(t=>t.stop());if(pc)pc.close();ws.close()});
 
 // If microphone permission was already granted, try to start automatically.
