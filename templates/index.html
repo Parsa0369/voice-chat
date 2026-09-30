@@ -414,12 +414,10 @@ async function tuneAudioSender(){
   }
 }
 function requestPeerRecovery(reason){
-  if(!started||!ws||ws.readyState!==WebSocket.OPEN||recoveryBusy)return;
-  recoveryBusy=true;
+  if(!started||!ws||ws.readyState!==WebSocket.OPEN)return;
   setStatus("اتصال ناپایدار؛ در حال بازیابی...");
   setHero("در حال بازیابی تماس","اتصال هر دو دستگاه دوباره بررسی می‌شود");
   send({type:"reconnect-request",reason});
-  setTimeout(()=>{recoveryBusy=false},5000);
 }
 async function performRecovery(){
   if(!started||!pc||recoveryBusy)return;
