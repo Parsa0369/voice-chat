@@ -60,7 +60,7 @@ const rtcConfig={iceServers:[
 {urls:"stun:stun.l.google.com:19302"},
 {urls:"stun:stun1.l.google.com:19302"}
 ]};
-function setStatus(t,online=false){statusText.textContent=t;statusEl.classList.toggle("online",online);logo.textContent=online?"📞":"🎙️";avatar.textContent=online?"🟢":"👤"}
+function setStatus(t,online=false){statusText.textContent=t;statusEl.classList.toggle("online",online);logo.textContent=online?"📞":"🎙️"}
 function startTimer(){if(timerHandle)return;callStartedAt=Date.now();timerHandle=setInterval(()=>{const s=Math.floor((Date.now()-callStartedAt)/1000),m=String(Math.floor(s/60)).padStart(2,"0"),sec=String(s%60).padStart(2,"0");timerEl.textContent=m+":"+sec},1000)}
 function stopTimer(){if(timerHandle)clearInterval(timerHandle);timerHandle=null;timerEl.textContent=""}
 function send(x){if(ws.readyState===WebSocket.OPEN)ws.send(JSON.stringify(x))}
@@ -155,8 +155,6 @@ muted=false;remoteMuted=false;remoteAudio.muted=false;
 muteBtn.textContent="🔇 قطع صدای من";muteBtn.classList.remove("muted");
 audioToggleBtn.textContent="🔊 قطع صدای طرف مقابل";stopTimer();setStatus("تماس قطع شد.");
 }
-startBtn.onclick=async()=>{await startMicrophone();await notify("کنترل تماس فعال شد")};
-copyBtn.onclick=async()=>{try{await navigator.clipboard.writeText(location.href);copyBtn.textContent="✓ لینک کپی شد";setTimeout(()=>copyBtn.textContent="🔗 کپی لینک اتاق",1600)}catch{prompt("لینک اتاق:",location.href)}};
 hangupBtn.onclick=hangup;muteBtn.onclick=toggleMute;audioToggleBtn.onclick=toggleRemoteAudio;
 window.addEventListener("beforeunload",()=>{if(localStream)localStream.getTracks().forEach(t=>t.stop());if(pc)pc.close();ws.close()});
 
