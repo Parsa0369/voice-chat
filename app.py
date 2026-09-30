@@ -31,6 +31,20 @@ async def app_icon():
     return FileResponse(APP_ICON, media_type="image/svg+xml", headers={"Cache-Control":"public, max-age=31536000, immutable"})
 
 
+@app.get("/image1")
+async def image1():
+    return FileResponse(APP_ICON, media_type="image/svg+xml", headers={"Cache-Control":"public, max-age=31536000, immutable"})
+
+
+@app.get("/image2")
+async def image2():
+    return FileResponse(
+        Path(__file__).parent / "static" / "notification-icon.svg",
+        media_type="image/svg+xml",
+        headers={"Cache-Control":"public, max-age=31536000, immutable"}
+    )
+
+
 @app.get("/connection-sound.mp3")
 async def connection_sound():
     return FileResponse(CONNECTION_SOUND, media_type="audio/mpeg", headers={"Cache-Control":"public, max-age=86400"})
