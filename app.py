@@ -1,6 +1,6 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from starlette.websockets import WebSocketState
-from fastapi.responses import HTMLResponse, Response, JSONResponse, FileResponse
+from fastapi.responses import HTMLResponse, Response, JSONResponse, FileResponse, RedirectResponse
 from pathlib import Path
 import json
 import os
@@ -13,9 +13,11 @@ INDEX = Path(__file__).parent / "templates" / "index.html"
 CONNECTION_SOUND = Path(__file__).parent / "connection-sound.mp3"
 
 
-@app.get("/", response_class=HTMLResponse)
+@app.get("/")
 async def home():
-    return HTMLResponse(INDEX.read_text(encoding="utf-8"), headers={"Cache-Control":"no-store, no-cache, must-revalidate, max-age=0"})
+    # Always give the visitor a real room URL instead of creating it only in browser JavaScript.
+    room_id = uuid.uuid4().hex[:8]
+    return RedirectResponse(f"/room/{room_id}", status_code=307)
 
 
 @app.get("/room/{room_id}", response_class=HTMLResponse)
@@ -89,7 +91,10 @@ async def manifest():
             "background_color": "#080b16",
             "theme_color": "#11182b",
             "lang": "fa",
-            "dir": "rtl"
+            "dir": "rtl",
+            "icons": [
+                {"src": "/notification-icon.svg?v=2", "sizes": "128x128", "type": "image/svg+xml", "purpose": "any maskable"}
+            ]
         }),
         media_type="application/manifest+json"
     )
