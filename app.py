@@ -11,6 +11,7 @@ app = FastAPI(title="Voice Chat")
 rooms: dict[str, set[WebSocket]] = {}
 INDEX = Path(__file__).parent / "templates" / "index.html"
 CONNECTION_SOUND = Path(__file__).parent / "connection-sound.mp3"
+APP_ICON = Path(__file__).parent / "static" / "icon.svg"
 
 
 @app.get("/")
@@ -23,6 +24,11 @@ async def home():
 @app.get("/room/{room_id}", response_class=HTMLResponse)
 async def room(room_id: str):
     return INDEX.read_text(encoding="utf-8")
+
+
+@app.get("/icon.svg")
+async def app_icon():
+    return FileResponse(APP_ICON, media_type="image/svg+xml", headers={"Cache-Control":"public, max-age=31536000, immutable"})
 
 
 @app.get("/connection-sound.mp3")
@@ -93,7 +99,7 @@ async def manifest():
             "lang": "fa",
             "dir": "rtl",
             "icons": [
-                {"src": "/notification-icon.svg?v=2", "sizes": "128x128", "type": "image/svg+xml", "purpose": "any maskable"}
+                {"src": "/icon.svg?v=1", "sizes": "512x512", "type": "image/svg+xml", "purpose": "any maskable"}
             ]
         }),
         media_type="application/manifest+json"
