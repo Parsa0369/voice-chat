@@ -93,7 +93,7 @@ setStatus("تماس برقرار است",true);startTimer();
 await notify("تماس صوتی برقرار شد");
 };
 pc.onconnectionstatechange=()=>{
-if(pc.connectionState==="connected"){setStatus("تماس برقرار است",true);startTimer();muteBtn.disabled=false;audioToggleBtn.disabled=false;}
+if(pc.connectionState==="connected"){setStatus("تماس برقرار است",true);startTimer();}
 if(["failed","disconnected"].includes(pc.connectionState))setStatus("اتصال ناپایدار است");
 };
 }
