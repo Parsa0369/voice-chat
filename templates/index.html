@@ -322,7 +322,7 @@ let muted=false,callStartedAt=0,timerHandle=null,started=false,pc=null,localStre
 let pendingIce=[],remoteDescriptionSet=false,restartTimer=null;
 let pingTimer=null;
 let recoveryTimer=null,recoveryBusy=false,badMediaTicks=0,lastMediaSnapshot=null;
-let stabilizeTimer=null,stabilizeAttempts=0,lastConnectedState=false;
+let stabilizeTimer=null,stabilizeAttempts=0,lastConnectedState=false,notificationShown=false;
 const pingBadge=$("pingBadge"),sendBadge=$("sendBadge"),recvBadge=$("recvBadge");
 
 const MIC_ON='<span class="icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="3" width="8" height="11" rx="4"></rect><path d="M5 11a7 7 0 0 0 14 0"></path><path d="M12 18v3"></path><path d="M8 21h8"></path></svg></span>';
@@ -520,6 +520,7 @@ navigator.serviceWorker?.addEventListener("message",e=>{
 });
 
 async function showCallNotification(){
+ if(notificationShown)return;
  if(!("Notification" in window)||Notification.permission!=="granted")return;
  if(!("serviceWorker" in navigator))return;
  try{
@@ -529,8 +530,8 @@ async function showCallNotification(){
    const options={
      body:"تماس صوتی فعال است • کنترل میکروفون و قطع تماس",
      tag:"voice-chat-call",
-     renotify:true,
-     silent:false,
+     renotify:false,
+     silent:true,
      requireInteraction:true,
      data:{roomId},
      icon:"/notification-icon.svg?v=1",
@@ -546,15 +547,11 @@ async function showCallNotification(){
    if("serviceWorker" in navigator){
      const reg=await navigator.serviceWorker.ready;
      const existing=await reg.getNotifications({tag:"voice-chat-call"});
-     if(!existing.length) await reg.showNotification("تماس صوتی",options);
-   }else{
-     new Notification("تماس صوتی",options);
+     if(!existing.length){ await reg.showNotification("تماس صوتی",options); notificationShown=true; }
    }
  }catch(e){
    console.warn("service notification failed",e);
-   try{
-     new Notification("تماس صوتی",{body:"تماس صوتی فعال است",tag:"voice-chat-call",requireInteraction:true});
-   }catch{}
+   // No browser fallback notification.
  }
 }
 
@@ -643,7 +640,7 @@ function startRecoveryMonitor(){
       const mediaBroken=pc.connectionState==="connected" && out && inb && !progressed;
       if(brokenState||mediaBroken)badMediaTicks++;else if(pc.connectionState==="connected")badMediaTicks=0;
       // One bad side is enough: either peer can ask the caller to restart ICE.
-      if(badMediaTicks>=3){
+      if(badMediaTicks>=5){
         badMediaTicks=0;
         requestPeerRecovery(brokenState?"connection-failed":"audio-stalled");
         await performRecovery();
@@ -655,16 +652,6 @@ function stopRecoveryMonitor(){clearInterval(recoveryTimer);recoveryTimer=null;b
 function startConnectionStabilizer(){
   clearTimeout(stabilizeTimer);
   stabilizeAttempts=0;
-  const run=async()=>{
-    if(!started||!pc||role!=="caller")return;
-    stabilizeAttempts++;
-    try{
-      if(stabilizeAttempts===1) await makeOffer(false);
-      else await makeOffer(true);
-    }catch(err){console.warn("connection stabilization",err)}
-    if(stabilizeAttempts<5) stabilizeTimer=setTimeout(run,[1200,2200,3200,4500][stabilizeAttempts-1]||4500);
-  };
-  stabilizeTimer=setTimeout(run,700);
 }
 
 async function preparePeer(){
@@ -700,7 +687,6 @@ async function preparePeer(){
      if(!lastConnectedState){ ding(); lastConnectedState=true; }
      setStatus("تماس برقرار است",true);
      setHero("متصل شدید","تماس صوتی فعال است");
-     ding();
      updateBadges();
      card.classList.add("calling");
      startTimer();
@@ -710,7 +696,7 @@ async function preparePeer(){
    if(pc.connectionState==="disconnected"){
      if(lastConnectedState){ ding(); lastConnectedState=false; }
      clearTimeout(restartTimer);
-     restartTimer=setTimeout(()=>restartIce(),1200);
+     restartTimer=setTimeout(()=>restartIce(),2500);
    }
    if(pc.connectionState==="failed"){
      if(lastConnectedState){ ding(); lastConnectedState=false; }
@@ -720,7 +706,7 @@ async function preparePeer(){
  };
  pc.oniceconnectionstatechange=async()=>{
    if(!pc)return;
-   if((pc.iceConnectionState==="failed"||pc.iceConnectionState==="disconnected") && role==="caller"){
+   if(pc.iceConnectionState==="failed" && role==="caller"){
      try{
        const offer=await pc.createOffer({iceRestart:true});
        await pc.setLocalDescription(offer);
@@ -750,7 +736,7 @@ async function startMicrophone(){
    localStream=await navigator.mediaDevices.getUserMedia({
      audio:{
        echoCancellation:true,noiseSuppression:true,autoGainControl:true,
-       channelCount:1
+       channelCount:1,sampleRate:48000
      },
      video:false
    });
@@ -763,7 +749,6 @@ async function startMicrophone(){
    updateBadges();
    await setupMediaSession();
    await preparePeer();
-   await showCallNotification();
    updateBadges();
 
    if(role==="caller")await makeOffer();
@@ -804,7 +789,7 @@ async function toggleMute(){
  remoteAudio.muted=false;
  remoteAudio.volume=1;
  if(remoteAudio.srcObject)await remoteAudio.play().catch(()=>{});
- if(Notification.permission==="granted")await showCallNotification();
+
 }
 
 async function hangup(){
