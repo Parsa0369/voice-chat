@@ -84,6 +84,9 @@ h1{font-size:21px;margin:0 0 4px} .sub{font-size:11px;color:#8994ad}
 @keyframes wave{from{height:6px;transform:scaleY(.7)}to{height:27px;transform:scaleY(1)}}
 .connection{display:flex;justify-content:center;gap:8px;margin:10px 0 0}
 .badge{font-size:9px;padding:6px 9px;border-radius:99px;background:#202225;border:1px solid #2f3136;color:#9da3ae;transition:.2s}
+#pingBadge.good,#sendBadge.good,#recvBadge.good{color:#4ade80;border-color:#245c3b;background:#10251a}
+#sendBadge.bad,#recvBadge.bad{color:#f87171;border-color:#6b2727;background:#2a1111}
+#sendBadge.wait,#recvBadge.wait{color:#facc15;border-color:#66551a;background:#29240c}
 #pingBadge.good{color:#4ade80;border-color:#245c3b;background:#10251a}
 #pingBadge.medium{color:#facc15;border-color:#66551a;background:#29240c}
 #pingBadge.bad{color:#f87171;border-color:#6b2727;background:#2a1111}
@@ -112,7 +115,7 @@ audio{display:none}
     <div class="room">شناسه اتاق: <b id="room"></b></div>
     <div class="visualizer" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
     <div class="timer" id="timer"></div>
-    <div class="connection"><span class="badge" id="transport">WebRTC • آماده</span><span class="badge" id="micBadge">میکروفون خاموش</span><span class="badge" id="pingBadge">پینگ: —</span></div>
+    <div class="connection"><span class="badge" id="transport">WebRTC • آماده</span><span class="badge" id="micBadge">میکروفون خاموش</span><span class="badge" id="pingBadge">پینگ: —</span><span class="badge" id="sendBadge">ارسال صدا: —</span><span class="badge" id="recvBadge">دریافت صدا: —</span></div>
   </section>
 <div class="controls">
   <button id="start" class="mainButton"><span id="startIcon"></span><span id="startLabel">وصل کردن میکروفون</span></button>
@@ -137,7 +140,7 @@ const startBtn=$("start"),startIcon=$("startIcon"),startLabel=$("startLabel"),mu
 let muted=false,callStartedAt=0,timerHandle=null,started=false,pc=null,localStream=null,role=null;
 let pendingIce=[],remoteDescriptionSet=false,restartTimer=null;
 let pingTimer=null;
-const pingBadge=$("pingBadge");
+const pingBadge=$("pingBadge"),sendBadge=$("sendBadge"),recvBadge=$("recvBadge");
 
 const MIC_ON='<span class="icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="3" width="8" height="11" rx="4"></rect><path d="M5 11a7 7 0 0 0 14 0"></path><path d="M12 18v3"></path><path d="M8 21h8"></path></svg></span>';
 const MIC_OFF='<span class="icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="3" width="8" height="11" rx="4"></rect><path d="M5 11a7 7 0 0 0 14 0"></path><path d="M12 18v3"></path><path d="M8 21h8"></path><path d="M4 4l16 16"></path></svg></span>';
@@ -245,6 +248,11 @@ function updateBadges(){
  setMicGraphics();
  transport.textContent=pc&&pc.connectionState==="connected"?"WebRTC • متصل":"WebRTC • در حال اتصال";
 }
+function setMediaBadge(el,label,ok){
+  el.classList.remove("good","bad","wait");
+  el.textContent=label;
+  el.classList.add(ok===true?"good":ok===false?"bad":"wait");
+}
 function setPing(ms){
   pingBadge.classList.remove("good","medium","bad","timeout");
   if(ms===null){
@@ -259,6 +267,26 @@ function setPing(ms){
   else pingBadge.classList.add("bad");
 }
 async function measurePing(){
+  if(!pc)return;
+  try{
+    const stats=await pc.getStats();
+    let outbound=null,inbound=null;
+    stats.forEach(s=>{
+      if(s.type==="outbound-rtp" && s.kind==="audio"){
+        outbound=s;
+      }
+      if(s.type==="inbound-rtp" && (s.kind==="audio" || s.mediaType==="audio")){
+        inbound=s;
+      }
+    });
+    const outOK=!!outbound && (outbound.packetsSent>0 || outbound.bytesSent>0);
+    const inOK=!!inbound && (inbound.packetsReceived>0 || inbound.bytesReceived>0);
+    setMediaBadge(sendBadge,"ارسال صدا: "+(outOK?"فعال":"قطع"),outOK);
+    setMediaBadge(recvBadge,"دریافت صدا: "+(inOK?"فعال":"قطع"),inOK);
+  }catch{
+    setMediaBadge(sendBadge,"ارسال صدا: —",null);
+    setMediaBadge(recvBadge,"دریافت صدا: —",null);
+  }
   if(!pc || pc.connectionState!=="connected"){
     if(started)setPing(null);
     return;
@@ -299,7 +327,7 @@ async function requestNotifications(){
 async function registerSW(){
  if(!("serviceWorker" in navigator))return;
  try{
-   const reg=await navigator.serviceWorker.register("/sw.js?v=6",{scope:"/",updateViaCache:"none"});
+   const reg=await navigator.serviceWorker.register("/sw.js?v=7",{scope:"/",updateViaCache:"none"});
    await reg.update();
    await navigator.serviceWorker.ready;
  }catch{}
@@ -308,6 +336,7 @@ registerSW();
 
 function handleNotificationAction(action){
  if(action==="toggle-microphone")toggleMute();
+ if(action==="hangup")hangup();
 }
 navigator.serviceWorker?.addEventListener("message",e=>{
  if(e.data?.type==="notification-action")handleNotificationAction(e.data.action);
