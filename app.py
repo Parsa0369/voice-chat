@@ -12,6 +12,7 @@ rooms: dict[str, set[WebSocket]] = {}
 INDEX = Path(__file__).parent / "templates" / "index.html"
 CONNECTION_SOUND = Path(__file__).parent / "connection-sound.mp3"
 APP_ICON = Path(__file__).parent / "static" / "icon.svg"
+HELLO_HTML = Path(__file__).parent / "hello" / "index.html"
 
 
 @app.get("/")
@@ -24,6 +25,21 @@ async def home():
 @app.get("/room/{room_id}", response_class=HTMLResponse)
 async def room(room_id: str):
     return HTMLResponse(INDEX.read_text(encoding="utf-8"), headers={"Cache-Control":"no-store, no-cache, must-revalidate, max-age=0", "Pragma":"no-cache", "Expires":"0"})
+
+
+@app.get("/hello")
+async def hello():
+    return RedirectResponse("/", status_code=307)
+
+
+@app.exception_handler(404)
+async def custom_404(request, exc):
+    if HELLO_HTML.exists():
+        return HTMLResponse(
+            HELLO_HTML.read_text(encoding="utf-8"),
+            status_code=404
+        )
+    return JSONResponse({"detail": "این صفحه پیدا نشد ):"}, status_code=404)
 
 
 @app.get("/google8c40933bfb8df01e.html")
