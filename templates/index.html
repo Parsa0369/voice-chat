@@ -8,34 +8,47 @@
 <link rel="manifest" href="/manifest.webmanifest">
 <title>Voice Chat</title>
 <style>
-*{box-sizing:border-box}body{margin:0;min-height:100vh;font-family:Tahoma,Arial,sans-serif;color:#fff;background:radial-gradient(circle at top,#263b67 0,#101624 45%,#080b12 100%);display:grid;place-items:center;padding:18px}
-.card{width:min(94vw,460px);padding:30px 24px;border:1px solid rgba(255,255,255,.1);border-radius:30px;background:rgba(18,25,40,.88);backdrop-filter:blur(18px);box-shadow:0 25px 80px rgba(0,0,0,.45);text-align:center}
-.logo{width:76px;height:76px;margin:0 auto 14px;border-radius:24px;display:grid;place-items:center;font-size:36px;background:linear-gradient(145deg,#4f8cff,#7c4dff);box-shadow:0 12px 35px rgba(79,140,255,.3)}
-h1{margin:0;font-size:28px}p{color:#aebbd0;line-height:1.9;margin:8px 0 18px}
-.status{display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;border-radius:15px;background:rgba(255,255,255,.06);margin-bottom:14px;font-weight:bold}
-.dot{width:9px;height:9px;border-radius:50%;background:#f59e0b}.online .dot{background:#22c55e;box-shadow:0 0 12px #22c55e}
-.room{font-size:13px;color:#8fb7ff;word-break:break-all;margin-bottom:12px}
-button{width:100%;border:0;border-radius:15px;padding:14px;margin-top:9px;font:inherit;font-weight:bold;color:white;background:#3978ff;cursor:pointer}
-button:disabled{opacity:.45;cursor:not-allowed}.secondary{background:#293449}.danger{background:#dc3545}
-.hint{font-size:12px;color:#8290a7;margin-top:15px}.hidden{display:none}audio{width:100%;margin-top:14px}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;font-family:Tahoma,Arial,sans-serif;color:#fff;background:radial-gradient(circle at 20% 0,#344b83 0,#151d32 42%,#070a11 100%);display:grid;place-items:center;padding:18px}
+.card{width:min(94vw,480px);padding:28px 22px;border:1px solid rgba(255,255,255,.12);border-radius:34px;background:rgba(13,19,33,.86);backdrop-filter:blur(22px);box-shadow:0 30px 90px rgba(0,0,0,.5);text-align:center}
+.logo{width:92px;height:92px;margin:0 auto 16px;border-radius:30px;display:grid;place-items:center;font-size:43px;background:linear-gradient(145deg,#5b8cff,#7d4dff);box-shadow:0 16px 40px rgba(79,120,255,.32)}
+h1{margin:0;font-size:29px}p{color:#aebbd0;line-height:1.9;margin:8px 0 18px}
+.status{display:flex;align-items:center;justify-content:center;gap:9px;padding:13px;border-radius:17px;background:rgba(255,255,255,.055);margin-bottom:14px;font-weight:bold}
+.dot{width:10px;height:10px;border-radius:50%;background:#f59e0b}.online .dot{background:#22c55e;box-shadow:0 0 15px #22c55e}
+.room{font-size:13px;color:#8fb7ff;word-break:break-all;margin-bottom:16px}
+.avatar{width:66px;height:66px;margin:4px auto 10px;border-radius:50%;display:grid;place-items:center;font-size:28px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1)}
+.timer{font-size:14px;color:#8f9db5;min-height:22px;margin-bottom:8px}
+.controls{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+button{width:100%;border:0;border-radius:17px;padding:15px 12px;font:inherit;font-weight:bold;color:white;background:#3978ff;cursor:pointer;transition:.18s;box-shadow:0 8px 20px rgba(0,0,0,.18)}
+button:active{transform:scale(.97)}button:disabled{opacity:.42;cursor:not-allowed}.secondary{background:#293449}.danger{background:#d9364a}.mute{background:#6d4cff}.muted{background:#b45309}
+#copy{margin-top:10px}
+.hint{font-size:11px;color:#74829a;line-height:1.8;margin-top:17px}.hidden{display:none}
+audio{display:none}
+@media(max-width:360px){.card{padding:24px 16px}.controls{grid-template-columns:1fr}h1{font-size:25px}}
 </style>
 </head>
 <body>
 <main class="card">
-<div class="logo">🎙️</div>
-<h1>Voice Chat</h1>
-<p>لینک اتاق را برای نفر دوم بفرست. بعد از اجازه‌ی اولیه، اتصال و پخش صدا خودکار انجام می‌شود.</p>
+<div class="logo" id="logo">🎙️</div>
+<h1>تماس صوتی</h1>
+<p>اتصال دو نفره با صدا. وقتی تماس برقرار شد، از همین‌جا می‌توانی صدا را وصل یا قطع کنی.</p>
 <div id="status" class="status"><span class="dot"></span><span>در حال اتصال...</span></div>
 <div id="room" class="room"></div>
-<button id="start">🎙️ اجازه میکروفون</button>
-<button id="copy" class="secondary">🔗 کپی لینک اتاق</button>
+<div class="avatar" id="avatar">👤</div>
+<div class="timer" id="timer"></div>
+<div class="controls">
+<button id="start">🎙️ وصل کردن میکروفون</button>
+<button id="mute" class="mute" disabled>🔇 قطع صدای من</button>
+<button id="audioToggle" class="secondary" disabled>🔊 قطع صدای طرف مقابل</button>
 <button id="hangup" class="danger" disabled>📞 قطع تماس</button>
+</div>
+<button id="copy" class="secondary">🔗 کپی لینک اتاق</button>
 <audio id="remoteAudio" autoplay playsinline></audio>
-<div class="hint">در مرورگرهای پشتیبانی‌شده، کنترل تماس از کنترل‌های رسانه‌ای سیستم هم در دسترس است.</div>
+<div class="hint">در گوشی و سیستم‌های پشتیبانی‌شده، کنترل‌های پخش مرورگر می‌توانند در اعلان/ویجت رسانه‌ای سیستم نمایش داده شوند. دکمه‌های داخل صفحه همیشه در دسترس‌اند.</div>
 </main>
 <script>
 const $=id=>document.getElementById(id);
-const statusEl=$("status"),statusText=statusEl.querySelector("span:last-child"),startBtn=$("start"),copyBtn=$("copy"),hangupBtn=$("hangup"),remoteAudio=$("remoteAudio"),roomEl=$("room");
+const statusEl=$("status"),statusText=statusEl.querySelector("span:last-child"),startBtn=$("start"),copyBtn=$("copy"),hangupBtn=$("hangup"),muteBtn=$("mute"),audioToggleBtn=$("audioToggle"),remoteAudio=$("remoteAudio"),roomEl=$("room"),timerEl=$("timer"),avatar=$("avatar"),logo=$("logo");
+let muted=false,remoteMuted=false,callStartedAt=0,timerHandle=null;
 const parts=location.pathname.split("/").filter(Boolean);
 let roomId=parts[0]==="room"&&parts[1]?decodeURIComponent(parts[1]):crypto.randomUUID().slice(0,8);
 if(!location.pathname.startsWith("/room/"))history.replaceState({}, "", "/room/"+encodeURIComponent(roomId));
@@ -47,14 +60,16 @@ const rtcConfig={iceServers:[
 {urls:"stun:stun.l.google.com:19302"},
 {urls:"stun:stun1.l.google.com:19302"}
 ]};
-function setStatus(t,online=false){statusText.textContent=t;statusEl.classList.toggle("online",online)}
+function setStatus(t,online=false){statusText.textContent=t;statusEl.classList.toggle("online",online);logo.textContent=online?"📞":"🎙️";avatar.textContent=online?"🟢":"👤"}
+function startTimer(){if(timerHandle)return;callStartedAt=Date.now();timerHandle=setInterval(()=>{const s=Math.floor((Date.now()-callStartedAt)/1000),m=String(Math.floor(s/60)).padStart(2,"0"),sec=String(s%60).padStart(2,"0");timerEl.textContent=m+":"+sec},1000)}
+function stopTimer(){if(timerHandle)clearInterval(timerHandle);timerHandle=null;timerEl.textContent=""}
 function send(x){if(ws.readyState===WebSocket.OPEN)ws.send(JSON.stringify(x))}
 async function setupMediaSession(){
 if(!("mediaSession" in navigator))return;
 navigator.mediaSession.metadata=new MediaMetadata({title:"Voice Chat",artist:"تماس صوتی",album:"Voice Chat"});
 for(const [action,fn] of [
-["play",()=>remoteAudio.play().catch(()=>{})],
-["pause",()=>remoteAudio.pause()],
+["play",()=>{remoteAudio.muted=false;remoteAudio.play().catch(()=>{})}],
+["pause",()=>{remoteAudio.muted=true}],
 ["stop",()=>hangup()],
 ["hangup",()=>hangup()]
 ]){try{navigator.mediaSession.setActionHandler(action,fn)}catch{}}
@@ -76,11 +91,12 @@ remoteAudio.srcObject=e.streams[0];
 remoteConnected=true;
 await remoteAudio.play().catch(()=>{});
 if("mediaSession" in navigator)navigator.mediaSession.playbackState="playing";
-setStatus("تماس برقرار است",true);
+setStatus("تماس برقرار است",true);startTimer();
+muteBtn.disabled=false;audioToggleBtn.disabled=false;
 await notify("تماس صوتی برقرار شد");
 };
 pc.onconnectionstatechange=()=>{
-if(pc.connectionState==="connected")setStatus("تماس برقرار است",true);
+if(pc.connectionState==="connected"){setStatus("تماس برقرار است",true);startTimer();muteBtn.disabled=false;audioToggleBtn.disabled=false;}
 if(["failed","disconnected"].includes(pc.connectionState))setStatus("اتصال ناپایدار است");
 };
 }
@@ -89,7 +105,7 @@ if(started)return;
 try{
 if(!navigator.mediaDevices?.getUserMedia)throw new Error("getUserMedia unavailable");
 localStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true},video:false});
-started=true;startBtn.disabled=true;hangupBtn.disabled=false;
+started=true;startBtn.disabled=true;hangupBtn.disabled=false;muteBtn.disabled=false;audioToggleBtn.disabled=false;
 await setupMediaSession();await preparePeer();
 setStatus("میکروفون آماده است؛ منتظر نفر دوم...");
 if(role==="caller")await makeOffer();
@@ -121,15 +137,27 @@ if(m.type==="answer"){if(pc)await pc.setRemoteDescription(m.sdp);return}
 if(m.type==="ice"){if(pc)try{await pc.addIceCandidate(m.candidate)}catch(err){console.warn(err)}return}
 if(m.type==="peer-left"){remoteAudio.srcObject=null;remoteConnected=false;if("mediaSession"in navigator)navigator.mediaSession.playbackState="none";setStatus("نفر مقابل از تماس خارج شد.")}
 };
+async function toggleMute(){
+if(!localStream)return;
+muted=!muted;localStream.getAudioTracks().forEach(t=>t.enabled=!muted);
+muteBtn.textContent=muted?"🎙️ وصل کردن صدای من":"🔇 قطع صدای من";muteBtn.classList.toggle("muted",muted);
+}
+function toggleRemoteAudio(){
+remoteMuted=!remoteMuted;remoteAudio.muted=remoteMuted;
+audioToggleBtn.textContent=remoteMuted?"🔊 وصل کردن صدای طرف مقابل":"🔊 قطع صدای طرف مقابل";
+}
 async function hangup(){
 if(localStream)localStream.getTracks().forEach(t=>t.stop());
 if(pc)pc.close();pc=null;started=false;remoteConnected=false;remoteAudio.srcObject=null;
 if("mediaSession"in navigator)navigator.mediaSession.playbackState="none";
-startBtn.disabled=false;hangupBtn.disabled=true;setStatus("تماس قطع شد.");
+startBtn.disabled=false;hangupBtn.disabled=true;muteBtn.disabled=true;audioToggleBtn.disabled=true;
+muted=false;remoteMuted=false;remoteAudio.muted=false;
+muteBtn.textContent="🔇 قطع صدای من";muteBtn.classList.remove("muted");
+audioToggleBtn.textContent="🔊 قطع صدای طرف مقابل";stopTimer();setStatus("تماس قطع شد.");
 }
 startBtn.onclick=async()=>{await startMicrophone();await notify("کنترل تماس فعال شد")};
 copyBtn.onclick=async()=>{try{await navigator.clipboard.writeText(location.href);copyBtn.textContent="✓ لینک کپی شد";setTimeout(()=>copyBtn.textContent="🔗 کپی لینک اتاق",1600)}catch{prompt("لینک اتاق:",location.href)}};
-hangupBtn.onclick=hangup;
+hangupBtn.onclick=hangup;muteBtn.onclick=toggleMute;audioToggleBtn.onclick=toggleRemoteAudio;
 window.addEventListener("beforeunload",()=>{if(localStream)localStream.getTracks().forEach(t=>t.stop());if(pc)pc.close();ws.close()});
 
 // If microphone permission was already granted, try to start automatically.
