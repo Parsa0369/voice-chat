@@ -53,7 +53,7 @@ body{
 .top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
 .brand{display:flex;align-items:center;gap:12px}
 .logo{width:50px;height:50px;border-radius:17px;display:grid;place-items:center;font-size:25px;
- background:#5865f2;box-shadow:0 12px 30px rgba(88,101,242,.28)}
+ background:#60a5fa;box-shadow:0 12px 30px rgba(96,165,250,.30)}
 h1{font-size:21px;margin:0 0 4px} .sub{font-size:11px;color:#8994ad}
 .pill{display:flex;align-items:center;gap:7px;padding:8px 11px;border-radius:99px;background:rgba(255,255,255,.06);font-size:11px;color:#aab5ca}
 .dot{width:7px;height:7px;border-radius:50%;background:#f59e0b}.online .dot{background:#22c55e;box-shadow:0 0 12px #22c55e}
@@ -69,7 +69,7 @@ h1{font-size:21px;margin:0 0 4px} .sub{font-size:11px;color:#8994ad}
 .timer{height:20px;font-variant-numeric:tabular-nums;color:#94a3b8;font-size:12px}
 .mainButton{
  width:100%;border:0;border-radius:20px;padding:17px 16px;color:#fff;font:inherit;font-weight:bold;font-size:15px;cursor:pointer;
- background:#5865f2;color:#fff;box-shadow:0 10px 24px rgba(88,101,242,.25);transition:.18s
+ background:#60a5fa;color:#fff;box-shadow:0 10px 24px rgba(96,165,250,.28);transition:.18s
 }
 .mainButton:active{transform:scale(.985)}.mainButton.danger{background:#ed4245;color:#fff;box-shadow:0 10px 24px rgba(237,66,69,.22)}
 .mainButton:disabled{opacity:.5;cursor:not-allowed}
@@ -77,7 +77,7 @@ h1{font-size:21px;margin:0 0 4px} .sub{font-size:11px;color:#8994ad}
 .infoBox{padding:11px;border:1px solid rgba(255,255,255,.07);border-radius:15px;background:rgba(255,255,255,.035);text-align:center}
 .infoBox strong{display:block;font-size:11px;margin-bottom:4px}.infoBox span{font-size:10px;color:#7f8aa2}
 .visualizer{display:flex;align-items:center;justify-content:center;gap:5px;height:30px;margin:4px 0 12px;opacity:.25;transition:.25s}
-.visualizer i{display:block;width:4px;height:8px;border-radius:9px;background:#5865f2}
+.visualizer i{display:block;width:4px;height:8px;border-radius:9px;background:#60a5fa}
 .calling .visualizer{opacity:1}
 .calling .visualizer i{animation:wave 850ms ease-in-out infinite alternate}
 .calling .visualizer i:nth-child(2){animation-delay:-.15s}.calling .visualizer i:nth-child(3){animation-delay:-.3s}.calling .visualizer i:nth-child(4){animation-delay:-.45s}.calling .visualizer i:nth-child(5){animation-delay:-.6s}
@@ -122,7 +122,7 @@ audio{display:none}
   <button id="muteBtn" class="muteButton" disabled><span id="muteIcon"></span><span id="muteLabel">خاموش کردن میکروفون</span></button>
 
   <div class="info">
-    <div class="infoBox"><strong>خصوصی</strong><span>حداکثر دو نفر</span></div>
+    <div class="infoBox"><strong>خصوصی</strong><span>اتصال مستقیم</span></div>
     <div class="infoBox"><strong>WebRTC</strong><span>صوت زنده</span></div>
   </div>
 
@@ -139,7 +139,7 @@ const startBtn=$("start"),startIcon=$("startIcon"),startLabel=$("startLabel"),mu
 
 let muted=false,callStartedAt=0,timerHandle=null,started=false,pc=null,localStream=null,role=null;
 let pendingIce=[],remoteDescriptionSet=false,restartTimer=null;
-let pingTimer=null;
+let pingTimer=null;\nlet recoveryTimer=null,recoveryBusy=false,badMediaTicks=0,lastMediaSnapshot=null;
 const pingBadge=$("pingBadge"),sendBadge=$("sendBadge"),recvBadge=$("recvBadge");
 
 const MIC_ON='<span class="icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="3" width="8" height="11" rx="4"></rect><path d="M5 11a7 7 0 0 0 14 0"></path><path d="M12 18v3"></path><path d="M8 21h8"></path></svg></span>';
@@ -399,12 +399,79 @@ async function loadTURN(){
 
 function send(x){if(ws.readyState===WebSocket.OPEN)ws.send(JSON.stringify(x))}
 
+async function tuneAudioSender(){
+  if(!pc)return;
+  for(const sender of pc.getSenders()){
+    if(sender.track?.kind!=="audio" || !sender.setParameters)continue;
+    try{
+      const p=sender.getParameters();
+      p.encodings ??= [{}];
+      // Give Opus enough headroom for clearer voice while letting WebRTC adapt to the network.
+      p.encodings[0].maxBitrate=128000;
+      if("dtx" in p.encodings[0])p.encodings[0].dtx="disabled";
+      await sender.setParameters(p);
+    }catch(err){console.debug("audio tuning skipped",err)}
+  }
+}
+function requestPeerRecovery(reason){
+  if(!started||!ws||ws.readyState!==WebSocket.OPEN||recoveryBusy)return;
+  recoveryBusy=true;
+  setStatus("اتصال ناپایدار؛ در حال بازیابی...");
+  setHero("در حال بازیابی تماس","اتصال هر دو دستگاه دوباره بررسی می‌شود");
+  send({type:"reconnect-request",reason});
+  setTimeout(()=>{recoveryBusy=false},5000);
+}
+async function performRecovery(){
+  if(!started||!pc||recoveryBusy)return;
+  recoveryBusy=true;
+  try{
+    if(pc.connectionState==="connected" && pc.restartIce){
+      pc.restartIce();
+      if(role==="caller")await makeOffer(true);
+      else send({type:"reconnect-request",reason:"callee-recovery"});
+    }else if(role==="caller"){
+      await makeOffer(true);
+    }else{
+      send({type:"reconnect-request",reason:"connection-recovery"});
+    }
+  }catch(err){console.warn("automatic recovery",err)}
+  setTimeout(()=>{recoveryBusy=false},5000);
+}
+function startRecoveryMonitor(){
+  clearInterval(recoveryTimer);
+  badMediaTicks=0;lastMediaSnapshot=null;
+  recoveryTimer=setInterval(async()=>{
+    if(!started||!pc)return;
+    try{
+      const stats=await pc.getStats();
+      let out=null,inb=null;
+      stats.forEach(s=>{
+        if(s.type==="outbound-rtp"&&s.kind==="audio")out=s;
+        if(s.type==="inbound-rtp"&&(s.kind==="audio"||s.mediaType==="audio"))inb=s;
+      });
+      const snap={out:out?.packetsSent||0,inb:inb?.packetsReceived||0,state:pc.connectionState};
+      const progressed=!lastMediaSnapshot || snap.out>lastMediaSnapshot.out || snap.inb>lastMediaSnapshot.inb;
+      lastMediaSnapshot=snap;
+      const brokenState=["failed","closed"].includes(pc.connectionState);
+      const mediaBroken=pc.connectionState==="connected" && out && inb && !progressed;
+      if(brokenState||mediaBroken)badMediaTicks++;else if(pc.connectionState==="connected")badMediaTicks=0;
+      // One bad side is enough: either peer can ask the caller to restart ICE.
+      if(badMediaTicks>=3){
+        badMediaTicks=0;
+        requestPeerRecovery(brokenState?"connection-failed":"audio-stalled");
+        await performRecovery();
+      }
+    }catch{}
+  },1500);
+}
+function stopRecoveryMonitor(){clearInterval(recoveryTimer);recoveryTimer=null;badMediaTicks=0;lastMediaSnapshot=null;}
+
 async function preparePeer(){
  if(pc)return;
  pc=new RTCPeerConnection({iceServers,bundlePolicy:"max-bundle",iceCandidatePoolSize:8,iceTransportPolicy:"all"});
  remoteDescriptionSet=false;
  pendingIce=[];
- if(localStream)for(const track of localStream.getTracks())pc.addTrack(track,localStream);
+ if(localStream)for(const track of localStream.getTracks())pc.addTrack(track,localStream);\n await tuneAudioSender();
 
  pc.onicecandidate=e=>{if(e.candidate)send({type:"ice",candidate:e.candidate})};
  pc.onicecandidateerror=e=>console.warn("ICE candidate error",e);
@@ -501,9 +568,9 @@ async function startMicrophone(){
  }
 }
 
-async function makeOffer(){
+async function makeOffer(iceRestart=false){
  await preparePeer();
- const offer=await pc.createOffer();
+ const offer=await pc.createOffer(iceRestart?{iceRestart:true}:undefined);
  await pc.setLocalDescription(offer);
  send({type:"offer",sdp:pc.localDescription});
 }
