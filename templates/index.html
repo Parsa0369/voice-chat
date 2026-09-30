@@ -148,8 +148,10 @@ async function showCallNotification(){
  if(!("Notification" in window)||Notification.permission!=="granted")return;
  try{
    const reg=await navigator.serviceWorker.ready;
+   const old=await reg.getNotifications({tag:"voice-chat-call"});
+   old.forEach(n=>n.close());
    await reg.showNotification("تماس صوتی",{
-     body:"تماس برقرار است — می‌توانی میکروفون را از اعلان کنترل کنی.",
+     body:muted?"میکروفون خاموش است — تماس همچنان برقرار است.":"تماس برقرار است — می‌توانی میکروفون را از اعلان کنترل کنی.",
      tag:"voice-chat-call",
      renotify:true,
      silent:true,
@@ -160,7 +162,7 @@ async function showCallNotification(){
      ]
    });
  }catch{
-   try{new Notification("تماس صوتی",{body:"تماس برقرار است",tag:"voice-chat-call",silent:true})}catch{}
+   try{new Notification("تماس صوتی",{body:muted?"میکروفون خاموش است":"تماس برقرار است",tag:"voice-chat-call",silent:true})}catch{}
  }
 }
 
@@ -265,12 +267,18 @@ async function makeOffer(){
 }
 
 async function toggleMute(){
- if(!localStream)return;
+ if(!localStream || !started)return;
  muted=!muted;
  localStream.getAudioTracks().forEach(t=>t.enabled=!muted);
  updateMicState();
+ setHero(
+   muted?"میکروفون خاموش است 🔇":"میکروفون روشن است 🎙️",
+   "تماس همچنان برقرار است"
+ );
+ setStatus("تماس برقرار است",true);
+ card.classList.add("calling");
  if("mediaSession" in navigator)navigator.mediaSession.playbackState="playing";
- if(Notification.permission==="granted")showCallNotification();
+ if(Notification.permission==="granted")await showCallNotification();
 }
 
 async function hangup(){
