@@ -356,7 +356,15 @@ async function showCallNotification(){
      silent:true,
      requireInteraction:true,
      data:{roomId},
-     actions:[{action:"toggle-microphone",title:"قطع و وصل"}]
+     icon:"/notification-icon.svg",
+     badge:"/notification-icon.svg",
+     lang:"fa",
+     dir:"rtl",
+     vibrate:[80,40,80],
+     actions:[
+       {action:"toggle-microphone",title:"میکروفون"},
+       {action:"hangup",title:"قطع تماس"}
+     ]
    });
  }catch(e){console.warn("notification failed",e)}
 }
