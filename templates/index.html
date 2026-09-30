@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Voice Chat</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      font-family: Tahoma, Arial, sans-serif;
+      background: #111827;
+      color: #fff;
+    }
+    .card {
+      width: min(92vw, 430px);
+      padding: 28px;
+      border-radius: 24px;
+      background: #1f2937;
+      box-shadow: 0 20px 60px rgba(0,0,0,.35);
+      text-align: center;
+    }
+    h1 { margin: 0 0 8px; font-size: 28px; }
+    p { color: #cbd5e1; line-height: 1.8; }
+    button {
+      width: 100%;
+      border: 0;
+      border-radius: 14px;
+      padding: 14px;
+      margin-top: 10px;
+      font-size: 16px;
+      cursor: pointer;
+      background: #3b82f6;
+      color: white;
+    }
+    button:disabled { opacity: .5; cursor: not-allowed; }
+    .danger { background: #dc2626; }
+    .secondary { background: #374151; }
+    #status { margin: 18px 0 4px; font-weight: bold; }
+    #room { word-break: break-all; color: #93c5fd; }
+    audio { width: 100%; margin-top: 18px; }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <h1>🎙️ Voice Chat</h1>
+    <p>برای تماس صوتی، لینک این اتاق را برای نفر دوم بفرست.</p>
+
+    <div id="status">در حال اتصال...</div>
+    <div id="room"></div>
+
+    <button id="start">فعال کردن میکروفون</button>
+    <button id="copy" class="secondary">کپی لینک اتاق</button>
+    <button id="hangup" class="danger" disabled>قطع تماس</button>
+
+    <audio id="remoteAudio" autoplay controls></audio>
+  </main>
+
+<script>
+const statusEl = document.getElementById("status");
+const roomEl = document.getElementById("room");
+const startBtn = document.getElementById("start");
+const copyBtn = document.getElementById("copy");
+const hangupBtn = document.getElementById("hangup");
+const remoteAudio = document.getElementById("remoteAudio");
+
+const pathParts = location.pathname.split("/").filter(Boolean);
+let roomId = pathParts[0] === "room" && pathParts[1]
+  ? decodeURIComponent(pathParts[1])
+  : crypto.randomUUID().slice(0, 8);
+
+if (!location.pathname.startsWith("/room/")) {
+  history.replaceState({}, "", "/room/" + roomId);
+}
+
+roomEl.textContent = "اتاق: " + roomId;
+
+const wsProtocol = location.protocol === "https:" ? "wss:" : "ws:";
+const ws = new WebSocket(
+  wsProtocol + "//" + location.host + "/ws/" + encodeURIComponent(roomId)
+);
+
+let pc = null;
+let localStream = null;
+let role = null;
+let started = false;
+
+const rtcConfig = {
+  iceServers: [
+    { urls: "stun:stun.l.google.com:19302" },
+    { urls: "stun:stun1.l.google.com:19302" }
+  ]
+};
+
+function setStatus(text) {
+  statusEl.textContent = text;
+}
+
+function send(data) {
+  if (ws.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify(data));
+  }
+}
+
+async function preparePeer() {
+  if (pc) return;
+
+  pc = new RTCPeerConnection(rtcConfig);
+
+  if (localStream) {
+    for (const track of localStream.getTracks()) {
+      pc.addTrack(track, localStream);
+    }
+  }
+
+  pc.onicecandidate = event => {
+    if (event.candidate) {
+      send({ type: "ice", candidate: event.candidate });
+    }
+  };
+
+  pc.ontrack = event => {
+    remoteAudio.srcObject = event.streams[0];
+    remoteAudio.play().catch(() => {});
+  };
+
+  pc.onconnectionstatechange = () => {
+    if (pc.connectionState === "connected") {
+      setStatus("🟢 تماس برقرار است");
+    } else if (["failed", "disconnected", "closed"].includes(pc.connectionState)) {
+      setStatus("🔴 تماس قطع شد");
+    }
+  };
+}
+
+async function startMicrophone() {
+  if (started) return;
+
+  try {
+    localStream = await navigator.mediaDevices.getUserMedia({
+      audio: {
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true
+      },
+      video: false
+    });
+
+    started = true;
+    startBtn.disabled = true;
+    hangupBtn.disabled = false;
+    setStatus("میکروفون فعال شد؛ منتظر نفر دوم...");
+    await preparePeer();
+
+    if (role === "caller") {
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      send({ type: "offer", sdp: pc.localDescription });
+    }
+  } catch (err) {
+    setStatus("اجازه استفاده از میکروفون داده نشد.");
+    console.error(err);
+  }
+}
+
+ws.onopen = () => {
+  setStatus("به اتاق وصل شد؛ میکروفون را فعال کن.");
+};
+
+ws.onmessage = async event => {
+  const msg = JSON.parse(event.data);
+
+  if (msg.type === "full") {
+    setStatus("این اتاق پر است.");
+    startBtn.disabled = true;
+    return;
+  }
+
+  if (msg.type === "joined") {
+    setStatus(msg.peers === 1
+      ? "منتظر نفر دوم..."
+      : "دو نفر در اتاق هستند.");
+    return;
+  }
+
+  if (msg.type === "ready") {
+    role = msg.role;
+    if (role === "caller" && started) {
+      await preparePeer();
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      send({ type: "offer", sdp: pc.localDescription });
+    }
+    return;
+  }
+
+  if (msg.type === "offer") {
+    await preparePeer();
+    await pc.setRemoteDescription(msg.sdp);
+    const answer = await pc.createAnswer();
+    await pc.setLocalDescription(answer);
+    send({ type: "answer", sdp: pc.localDescription });
+    return;
+  }
+
+  if (msg.type === "answer") {
+    if (pc) await pc.setRemoteDescription(msg.sdp);
+    return;
+  }
+
+  if (msg.type === "ice") {
+    if (pc) {
+      try {
+        await pc.addIceCandidate(msg.candidate);
+      } catch (err) {
+        console.warn("ICE error", err);
+      }
+    }
+    return;
+  }
+
+  if (msg.type === "peer-left") {
+    setStatus("نفر مقابل از تماس خارج شد.");
+    remoteAudio.srcObject = null;
+  }
+};
+
+startBtn.onclick = startMicrophone;
+
+copyBtn.onclick = async () => {
+  try {
+    await navigator.clipboard.writeText(location.href);
+    copyBtn.textContent = "لینک کپی شد ✓";
+    setTimeout(() => copyBtn.textContent = "کپی لینک اتاق", 1500);
+  } catch {
+    prompt("لینک اتاق:", location.href);
+  }
+};
+
+hangupBtn.onclick = () => {
+  if (localStream) localStream.getTracks().forEach(track => track.stop());
+  if (pc) pc.close();
+  pc = null;
+  started = false;
+  startBtn.disabled = false;
+  hangupBtn.disabled = true;
+  remoteAudio.srcObject = null;
+  setStatus("تماس قطع شد.");
+};
+
+window.addEventListener("beforeunload", () => {
+  if (localStream) localStream.getTracks().forEach(track => track.stop());
+  if (pc) pc.close();
+  ws.close();
+});
+</script>
+</body>
+</html>
